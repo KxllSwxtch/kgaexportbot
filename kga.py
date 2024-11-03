@@ -726,13 +726,6 @@ def handle_callback_query(call):
 def handle_message(message):
     user_message = message.text.strip()
 
-    # types.KeyboardButton("Расчёт"),
-    # types.KeyboardButton("Написать менеджеру"),
-    # types.KeyboardButton("О компании"),
-    # types.KeyboardButton("Telegram-канал"),
-    # types.KeyboardButton("Написать нам в WhatsApp"),
-    # types.KeyboardButton("Наш Instagram"),
-
     # Проверяем нажатие кнопки "Рассчитать автомобиль"
     if user_message == "Расчёт":
         bot.send_message(
