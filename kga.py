@@ -121,12 +121,12 @@ def currencyrates_command(message):
 def main_menu():
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
     keyboard.add(
-        types.KeyboardButton("🔍 Рассчитать автомобиль до Владивостока"),
-        types.KeyboardButton("✉️ Написать менеджеру"),
-        types.KeyboardButton("ℹ️ О компании KGA Export"),
-        types.KeyboardButton("📢 Наш Telegram-канал"),
-        types.KeyboardButton("📞 Связаться через WhatsApp"),
-        types.KeyboardButton("📸 Посетить наш Instagram"),
+        types.KeyboardButton("Расчёт"),
+        types.KeyboardButton("Написать менеджеру"),
+        types.KeyboardButton("О компании"),
+        types.KeyboardButton("Telegram-канал"),
+        types.KeyboardButton("Написать нам в WhatsApp"),
+        types.KeyboardButton("Наш Instagram"),
     )
     return keyboard
 
@@ -136,9 +136,9 @@ def main_menu():
 def send_welcome(message):
     user_first_name = message.from_user.first_name
     welcome_message = (
-        f"👋 Здравствуйте, {user_first_name}!\n"
-        "Я бот компании KGA Export для расчета стоимости авто до Владивостока! 🚗💰\n\n"
-        "Пожалуйста, выберите действие из меню ниже:"
+        f"Здравствуйте, {user_first_name}!\n"
+        "Рад приветствовать вас! Я бот компании KGA Export, я помогу вам рассчитать стоимость автомобиля до Владивостока. 🚗💰\n\n"
+        "Выберите действие в меню ниже, и давайте начнём!"
     )
     bot.send_message(message.chat.id, welcome_message, reply_markup=main_menu())
 
@@ -757,8 +757,15 @@ def handle_callback_query(call):
 def handle_message(message):
     user_message = message.text.strip()
 
+    # types.KeyboardButton("Расчёт"),
+    # types.KeyboardButton("Написать менеджеру"),
+    # types.KeyboardButton("О компании"),
+    # types.KeyboardButton("Telegram-канал"),
+    # types.KeyboardButton("Написать нам в WhatsApp"),
+    # types.KeyboardButton("Наш Instagram"),
+
     # Проверяем нажатие кнопки "Рассчитать автомобиль"
-    if user_message == "🔍 Рассчитать автомобиль до Владивостока":
+    if user_message == "Расчёт":
         bot.send_message(
             message.chat.id,
             "Пожалуйста, введите ссылку на автомобиль с сайта www.encar.com:",
@@ -769,25 +776,28 @@ def handle_message(message):
         calculate_cost(user_message, message)
 
     # Проверка на другие команды
-    elif user_message == "✉️ Написать менеджеру":
+    elif user_message == "Написать менеджеру":
         bot.send_message(
             message.chat.id, "Вы можете связаться с менеджером по ссылке: @alekseyan85"
         )
-    elif user_message == "📞 Связаться через WhatsApp":
+
+    elif user_message == "Написать нам в WhatsApp":
         whatsapp_link = "https://wa.me/821049911282"
         bot.send_message(
             message.chat.id,
             f"Вы можете связаться с нами через WhatsApp по ссылке: {whatsapp_link}",
         )
-    elif user_message == "ℹ️ О компании KGA Export":
+
+    elif user_message == "О компании":
         about_message = "KGA Export — это компания, специализирующаяся на экспорте автомобилей из Южной Кореи. Мы предлагаем нашим клиентам широкий ассортимент автомобилей и обеспечиваем прозрачные условия сотрудничества."
         bot.send_message(message.chat.id, about_message)
-    elif user_message == "📢 Наш Telegram-канал":
+
+    elif user_message == "Telegram-канал":
         channel_link = "https://t.me/kga_korea"
         bot.send_message(
             message.chat.id, f"Подписывайтесь на наш Telegram-канал: {channel_link}"
         )
-    elif user_message == "📸 Посетить наш Instagram":
+    elif user_message == "Наш Instagram":
         instagram_link = "https://www.instagram.com/kgakorea/"
         bot.send_message(message.chat.id, f"Посетите наш Instagram: {instagram_link}")
 
