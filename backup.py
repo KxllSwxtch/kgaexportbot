@@ -78,7 +78,7 @@ def get_currency_rates():
         f"Курс валют ЦБ:\n\n"
         f"EUR {eur:.4f} ₽\n"
         f"USD {usd:.4f} ₽\n"
-        f"KRW {krw:.4f} ₽\n"
+        f"KRW {krw/krw_nominal:.4f} ₽\n"
         f"CNY {cny:.4f} ₽"
     )
 
