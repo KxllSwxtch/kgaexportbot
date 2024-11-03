@@ -24,9 +24,8 @@ from selenium.common.exceptions import NoAlertPresentException
 
 # CapSolver API key
 CAPSOLVER_API_KEY = os.getenv("CAPSOLVER_API_KEY")  # Замените на ваш API-ключ CapSolver
-SITE_KEY = os.getenv("SITE_KEY")
-CHROMEDRIVER_PATH = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
-# CHROMEDRIVER_PATH = "/opt/homebrew/bin/chromedriver"
+# CHROMEDRIVER_PATH = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
+CHROMEDRIVER_PATH = "/opt/homebrew/bin/chromedriver"
 COOKIES_FILE = "cookies.pkl"
 
 session = requests.Session()
@@ -63,10 +62,6 @@ def set_bot_commands():
     bot.set_my_commands(commands)
 
 
-# Вызов функции для установки команд
-set_bot_commands()
-
-
 # Функция для получения курсов валют с API
 def get_currency_rates():
     url = "https://www.cbr-xml-daily.ru/daily_json.js"
@@ -74,13 +69,10 @@ def get_currency_rates():
     data = response.json()
 
     # Получаем курсы валют
-    eur = data["Valute"]["EUR"]["Value"]
-    usd = data["Valute"]["USD"]["Value"]
-
-    krw = data["Valute"]["KRW"]["Value"]
-    krw_nominal = data["Valute"]["KRW"]["Nominal"]
-
-    cny = data["Valute"]["CNY"]["Value"]
+    eur = data["Valute"]["EUR"]["Value"] + 2
+    usd = data["Valute"]["USD"]["Value"] + 2
+    krw = (data["Valute"]["KRW"]["Value"] / data["Valute"]["KRW"]["Nominal"]) + 2
+    cny = data["Valute"]["CNY"]["Value"] + 2
 
     # Форматируем текст
     rates_text = (
@@ -131,7 +123,7 @@ def main_menu():
     keyboard.add(
         types.KeyboardButton("🔍 Рассчитать автомобиль до Владивостока"),
         types.KeyboardButton("✉️ Написать менеджеру"),
-        types.KeyboardButton("ℹ️ О компании HanExport"),
+        types.KeyboardButton("ℹ️ О компании KGA Export"),
         types.KeyboardButton("📢 Наш Telegram-канал"),
         types.KeyboardButton("📞 Связаться через WhatsApp"),
         types.KeyboardButton("📸 Посетить наш Instagram"),
@@ -145,7 +137,7 @@ def send_welcome(message):
     user_first_name = message.from_user.first_name
     welcome_message = (
         f"👋 Здравствуйте, {user_first_name}!\n"
-        "Я бот компании HanExport для расчета стоимости авто до Владивостока! 🚗💰\n\n"
+        "Я бот компании KGA Export для расчета стоимости авто до Владивостока! 🚗💰\n\n"
         "Пожалуйста, выберите действие из меню ниже:"
     )
     bot.send_message(message.chat.id, welcome_message, reply_markup=main_menu())
@@ -443,7 +435,7 @@ def calculate_cost(link, message):
         keyboard = types.InlineKeyboardMarkup()
         keyboard.add(
             types.InlineKeyboardButton(
-                "Написать менеджеру", url="https://t.me/hanexport11"
+                "Написать менеджеру", url="https://t.me/alekseyan85"
             ),
         )
         keyboard.add(
@@ -492,8 +484,8 @@ def calculate_cost(link, message):
                     f"Объём двигателя: {engine_volume_formatted}\n\n"
                     f"Стоимость автомобиля под ключ до Владивостока: \n**{total_cost_formatted}₽**\n\n"
                     f"🔗 [Ссылка на автомобиль]({link})\n\n"
-                    "Данное авто попадает под санкции, пожалуйста уточните возможность отправки в вашу страну у менеджера @hanexport11\n\n"
-                    "🔗[Официальный телеграм канал](https://t.me/hanexport1)\n"
+                    "Данное авто попадает под санкции, пожалуйста уточните возможность отправки в вашу страну у менеджера @alekseyan85\n\n"
+                    "🔗[Официальный телеграм канал](https://t.me/kga_korea)\n"
                 )
 
                 bot.send_message(message.chat.id, result_message, parse_mode="Markdown")
@@ -513,7 +505,7 @@ def calculate_cost(link, message):
                 )
                 keyboard.add(
                     types.InlineKeyboardButton(
-                        "✉️ Связаться с менеджером", url="https://t.me/hanexport11"
+                        "✉️ Связаться с менеджером", url="https://t.me/alekseyan85"
                     ),
                 )
                 keyboard.add(
@@ -655,7 +647,7 @@ def handle_callback_query(call):
         detail_message = (
             "📝 Детализация расчёта:\n\n"
             f"Стоимость авто: <b>{format_number(details['car_price_korea'])}₽</b>\n\n"
-            f"Услуги HanExport: <b>{format_number(details['dealer_fee'])}₽</b>\n\n"
+            f"Услуги KGA Export: <b>{format_number(details['dealer_fee'])}₽</b>\n\n"
             f"Логистика по Южной Корее: <b>{format_number(details['korea_logistics'])}₽</b>\n\n"
             f"Таможенная очистка: <b>{format_number(details['customs_fee'])}₽</b>\n\n"
             f"Доставка до Владивостока: <b>{format_number(details['delivery_fee'])}₽</b>\n\n"
@@ -678,7 +670,7 @@ def handle_callback_query(call):
         )
         keyboard.add(
             types.InlineKeyboardButton(
-                "✉️ Связаться с менеджером", url="https://t.me/hanexport11"
+                "✉️ Связаться с менеджером", url="https://t.me/alekseyan85"
             )
         )
 
@@ -707,7 +699,7 @@ def handle_callback_query(call):
             )
             keyboard.add(
                 types.InlineKeyboardButton(
-                    "✉️ Связаться с менеджером", url="https://t.me/hanexport11"
+                    "✉️ Связаться с менеджером", url="https://t.me/alekseyan85"
                 )
             )
 
@@ -743,7 +735,7 @@ def handle_callback_query(call):
             )
             keyboard.add(
                 types.InlineKeyboardButton(
-                    "✉️ Связаться с менеджером", url="https://t.me/hanexport11"
+                    "✉️ Связаться с менеджером", url="https://t.me/alekseyan85"
                 )
             )
 
@@ -779,28 +771,24 @@ def handle_message(message):
     # Проверка на другие команды
     elif user_message == "✉️ Написать менеджеру":
         bot.send_message(
-            message.chat.id, "Вы можете связаться с менеджером по ссылке: @hanexport11"
+            message.chat.id, "Вы можете связаться с менеджером по ссылке: @alekseyan85"
         )
     elif user_message == "📞 Связаться через WhatsApp":
-        whatsapp_link = "https://wa.me/821084266744"
+        whatsapp_link = "https://wa.me/821049911282"
         bot.send_message(
             message.chat.id,
             f"Вы можете связаться с нами через WhatsApp по ссылке: {whatsapp_link}",
         )
-    elif user_message == "ℹ️ О компании HanExport":
-        about_message = (
-            "HanExport — это компания, специализирующаяся на экспорте автомобилей "
-            "из Южной Кореи. Мы предлагаем широкий выбор автомобилей и прозрачные условия "
-            "для наших клиентов."
-        )
+    elif user_message == "ℹ️ О компании KGA Export":
+        about_message = "KGA Export — это компания, специализирующаяся на экспорте автомобилей из Южной Кореи. Мы предлагаем нашим клиентам широкий ассортимент автомобилей и обеспечиваем прозрачные условия сотрудничества."
         bot.send_message(message.chat.id, about_message)
     elif user_message == "📢 Наш Telegram-канал":
-        channel_link = "https://t.me/hanexport1"
+        channel_link = "https://t.me/kga_korea"
         bot.send_message(
             message.chat.id, f"Подписывайтесь на наш Telegram-канал: {channel_link}"
         )
     elif user_message == "📸 Посетить наш Instagram":
-        instagram_link = "https://www.instagram.com/hanexport1"
+        instagram_link = "https://www.instagram.com/kgakorea/"
         bot.send_message(message.chat.id, f"Посетите наш Instagram: {instagram_link}")
 
     # Если сообщение не соответствует ни одному из условий
@@ -830,4 +818,5 @@ def format_number(number):
 
 # Run the bot
 if __name__ == "__main__":
+    set_bot_commands()
     bot.polling(none_stop=True)
