@@ -139,7 +139,7 @@ def send_welcome(message):
     user_first_name = message.from_user.first_name
     welcome_message = (
         f"Здравствуйте, {user_first_name}!\n"
-        "Рад приветствовать вас! Я бот компании KGA Export, я помогу вам рассчитать стоимость автомобиля до Владивостока. 🚗💰\n\n"
+        "Рад приветствовать вас! Я бот компании KGA KOREA, я помогу вам рассчитать стоимость автомобиля до Владивостока. 🚗💰\n\n"
         "Выберите действие в меню ниже, и давайте начнём!"
     )
     bot.send_message(message.chat.id, welcome_message, reply_markup=main_menu())
@@ -438,22 +438,54 @@ def calculate_cost(link, message):
                 engine_volume_formatted = f"{format_number(int(engine_volume))} cc"
                 age_formatted = calculate_age(year)
 
-                total_cost = int(
-                    json_response.get("result")["price"]["grandTotal"]
-                ) - int(
-                    json_response.get("result")["price"]["russian"]["recyclingFee"][
+                # total_cost = int(
+                #     json_response.get("result")["price"]["grandTotal"]
+                # ) - int(
+                #     json_response.get("result")["price"]["russian"]["recyclingFee"][
+                #         "rub"
+                #     ]
+                # )
+
+                details = {
+                    "car_price_korea": json_response.get("result")["price"]["car"][
                         "rub"
-                    ]
-                )
-                total_cost_formatted_rub = format_number(total_cost)
-                total_cost_formatted_usd = format_number(total_cost / usd_rate)
+                    ],
+                    "customs_fee": json_response.get("result")["price"]["russian"][
+                        "duty"
+                    ]["rub"],
+                    "registration": json_response.get("result")["price"]["russian"][
+                        "registration"
+                    ]["rub"],
+                    "sbkts": json_response.get("result")["price"]["russian"]["sbkts"][
+                        "rub"
+                    ],
+                    "svhAndExpertise": json_response.get("result")["price"]["russian"][
+                        "svhAndExpertise"
+                    ]["rub"],
+                }
+
+                # Car's price in KRW
                 price_formatted = format_number(price)
+
+                # Price in USD
+                total_cost_usd = (
+                    details["car_price_korea"] / (usd_rate)
+                    + 600
+                    + 600
+                    + details["customs_fee"] / (usd_rate)
+                    + 25000 / usd_rate
+                    + details["svhAndExpertise"] / (usd_rate)
+                    + details["sbkts"] / (usd_rate)
+                )
+
+                # Price in RUB
+                total_cost_rub = total_cost_usd * usd_rate
 
                 result_message = (
                     f"Возраст: {age_formatted}\n"
                     f"Стоимость: {price_formatted} KRW\n"
                     f"Объём двигателя: {engine_volume_formatted}\n\n"
-                    f"Стоимость автомобиля под ключ до Владивостока: \n**{total_cost_formatted_rub}₽ / {total_cost_formatted_usd}$**\n\n"
+                    f"Стоимость автомобиля под ключ до Владивостока: \n**{format_number(total_cost_rub)}₽ / {format_number(total_cost_usd)}$**\n\n"
                     f"🔗 [Ссылка на автомобиль]({link})\n\n"
                     "Если данное авто попадает под санкции, пожалуйста уточните возможность отправки в вашу страну у менеджера @alekseyan85\n\n"
                     "🔗[Официальный телеграм канал](https://t.me/kga_korea)\n"
@@ -618,7 +650,7 @@ def handle_callback_query(call):
             f"Оформление / Брокер: <b>{registration_fee_formatted}$</b>\n\n"
             f"СБКТС / ЭПТС: <b>{sbkts_formatted}$</b>\n\n"
             f"СВХ / Выгрузка: <b>{svh_formatted}$</b>\n\n\n"
-            f"<b>ПРИМЕЧАНИЕ: </b> В дальнейшем наш менеджер предоставит вам точный расчёт стоимости, учитывая актуальный курс валют на <b style='text-transform: uppercase;'>день оформления</b>. Так как стоимость авто зависит от курсы корейской воны и доллара, а стоимость растаможки в РФ - от курса евро.\n\nНе волнуйтесь, если цена немного изменится - это нормально. Ваше доверие - наш главный приоритет!\n\n"
+            f"<b>ПРИМЕЧАНИЕ: </b> В дальнейшем наш менеджер предоставит вам точный расчёт стоимости, учитывая актуальный курс валют на <b style='text-transform: uppercase;'>день оформления</b>. Так как стоимость авто зависит от курса корейской воны и доллара, а стоимость растаможки в РФ - от курса евро.\n\nНе волнуйтесь, если цена немного изменится - это нормально. Ваше доверие - наш главный приоритет!\n\n"
         )
 
         bot.send_message(call.message.chat.id, detail_message, parse_mode="HTML")
@@ -745,7 +777,7 @@ def handle_message(message):
         )
 
     elif user_message == "О компании":
-        about_message = "KGA Export — это компания, специализирующаяся на экспорте автомобилей из Южной Кореи. Мы предлагаем нашим клиентам широкий ассортимент автомобилей и обеспечиваем прозрачные условия сотрудничества."
+        about_message = "KGA KOREA — ваш надёжный друг в мире автомобилей из Южной Кореи. Мы работаем напрямую, без посредников! Наше обещание: никаких скрытых условий, только прозрачный и честный подход к каждому клиенту!"
         bot.send_message(message.chat.id, about_message)
 
     elif user_message == "Telegram-канал":
@@ -779,6 +811,7 @@ def calculate_age(year):
 
 
 def format_number(number):
+    number = float(number) if isinstance(number, str) else number
     return locale.format_string("%d", number, grouping=True)
 
 
