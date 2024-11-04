@@ -50,6 +50,7 @@ last_error_message_id = {}
 # global variables
 car_data = {}
 car_id_external = ""
+usd_rate = None
 
 
 # Функция для установки команд меню
@@ -63,23 +64,25 @@ def set_bot_commands():
 
 # Функция для получения курсов валют с API
 def get_currency_rates():
+    global usd_rate
+
     url = "https://www.cbr-xml-daily.ru/daily_json.js"
     response = requests.get(url)
     data = response.json()
 
     # Получаем курсы валют
-    eur = data["Valute"]["EUR"]["Value"] + 2
-    usd = data["Valute"]["USD"]["Value"] + 2
-    krw = (data["Valute"]["KRW"]["Value"] / data["Valute"]["KRW"]["Nominal"]) + 2
-    cny = data["Valute"]["CNY"]["Value"] + 2
+    eur_rate = data["Valute"]["EUR"]["Value"] + 2
+    usd_rate = data["Valute"]["USD"]["Value"] + 2
+    krw_rate = data["Valute"]["KRW"]["Value"] / data["Valute"]["KRW"]["Nominal"]
+    cny_rate = data["Valute"]["CNY"]["Value"] + 2
 
     # Форматируем текст
     rates_text = (
         f"Курс валют ЦБ:\n\n"
-        f"EUR {eur:.4f} ₽\n"
-        f"USD {usd:.4f} ₽\n"
-        f"KRW {krw:.4f} ₽\n"
-        f"CNY {cny:.4f} ₽"
+        f"EUR {eur_rate:.4f} ₽\n"
+        f"USD {usd_rate:.4f} ₽\n"
+        f"KRW {krw_rate:.4f} ₽\n"
+        f"CNY {cny_rate:.4f} ₽"
     )
 
     return rates_text
@@ -274,10 +277,7 @@ def get_car_info(url):
             print("Элемент areaLeaseRent не найден или нет информации о лизинге.")
 
         # Инициализация переменных для информации о машине
-        car_title = ""
-        car_date = ""
-        car_engine_capacity = ""
-        car_price = ""
+        car_title, car_date, car_engine_capacity, car_price = "", "", "", ""
 
         # Проверка элемента product_left
         try:
@@ -331,6 +331,7 @@ def get_car_info(url):
                     for index, info in enumerate(keyinfo_texts):
                         if index == 12:
                             car_price = re.sub(r"\D", "", info)
+
                 except NoSuchElementException:
                     print("Элемент wrap_keyinfo не найден.")
             except NoSuchElementException:
@@ -444,16 +445,19 @@ def calculate_cost(link, message):
                         "rub"
                     ]
                 )
-                total_cost_formatted = format_number(total_cost)
+                total_cost_formatted_rub = format_number(total_cost)
+                total_cost_formatted_usd = format_number(total_cost / (usd_rate + 1))
                 price_formatted = format_number(price)
+
+                print(usd_rate + 1)
 
                 result_message = (
                     f"Возраст: {age_formatted}\n"
                     f"Стоимость: {price_formatted} KRW\n"
                     f"Объём двигателя: {engine_volume_formatted}\n\n"
-                    f"Стоимость автомобиля под ключ до Владивостока: \n**{total_cost_formatted}₽**\n\n"
+                    f"Стоимость автомобиля под ключ до Владивостока: \n**{total_cost_formatted_rub}₽ / {total_cost_formatted_usd}$**\n\n"
                     f"🔗 [Ссылка на автомобиль]({link})\n\n"
-                    "Данное авто попадает под санкции, пожалуйста уточните возможность отправки в вашу страну у менеджера @alekseyan85\n\n"
+                    "Если данное авто попадает под санкции, пожалуйста уточните возможность отправки в вашу страну у менеджера @alekseyan85\n\n"
                     "🔗[Официальный телеграм канал](https://t.me/kga_korea)\n"
                 )
 
@@ -578,7 +582,7 @@ def get_insurance_total():
 # Callback query handler
 @bot.callback_query_handler(func=lambda call: True)
 def handle_callback_query(call):
-    global car_data, car_id_external
+    global car_data, car_id_external, usd_rate
 
     if call.data.startswith("detail"):
         print("\n\n####################")
@@ -587,21 +591,7 @@ def handle_callback_query(call):
 
         details = {
             "car_price_korea": car_data.get("result")["price"]["car"]["rub"],
-            "dealer_fee": car_data.get("result")["price"]["korea"]["ab"]["rub"],
-            "korea_logistics": car_data.get("result")["price"]["korea"]["logistic"][
-                "rub"
-            ],
-            "customs_fee": car_data.get("result")["price"]["korea"]["dutyCleaning"][
-                "rub"
-            ],
-            "delivery_fee": car_data.get("result")["price"]["korea"]["delivery"]["rub"],
-            "dealer_commission": car_data.get("result")["price"]["korea"][
-                "dealerCommission"
-            ]["rub"],
-            "russiaDuty": car_data.get("result")["price"]["russian"]["duty"]["rub"],
-            "recycle_fee": car_data.get("result")["price"]["russian"]["recyclingFee"][
-                "rub"
-            ],
+            "customs_fee": car_data.get("result")["price"]["russian"]["duty"]["rub"],
             "registration": car_data.get("result")["price"]["russian"]["registration"][
                 "rub"
             ],
@@ -609,22 +599,30 @@ def handle_callback_query(call):
             "svhAndExpertise": car_data.get("result")["price"]["russian"][
                 "svhAndExpertise"
             ]["rub"],
-            "delivery": car_data.get("result")["price"]["russian"]["delivery"]["rub"],
         }
+
+        # Formatted numbers
+        car_price_formatted = format_number(details["car_price_korea"] / (usd_rate + 1))
+        kga_export_service_fee_formatted = format_number(600)
+        delivery_fee_formatted = format_number(600)
+        customs_fee_formatted = format_number(details["customs_fee"] / (usd_rate + 1))
+        registration_fee_formatted = format_number(
+            details["registration"] / (usd_rate + 1)
+        )
+        sbkts_formatted = format_number(details["svhAndExpertise"] / (usd_rate + 1))
+        svh_formatted = format_number(details["sbkts"] / (usd_rate + 1))
 
         # Construct cost breakdown message
         detail_message = (
             "📝 Детализация расчёта:\n\n"
-            f"Стоимость авто: <b>{format_number(details['car_price_korea'])}₽</b>\n\n"
-            f"Услуги KGA Export: <b>{format_number(details['dealer_fee'])}₽</b>\n\n"
-            f"Логистика по Южной Корее: <b>{format_number(details['korea_logistics'])}₽</b>\n\n"
-            f"Таможенная очистка: <b>{format_number(details['customs_fee'])}₽</b>\n\n"
-            f"Доставка до Владивостока: <b>{format_number(details['delivery_fee'])}₽</b>\n\n"
-            f"Комиссия дилера: <b>{format_number(details['dealer_commission'])}₽</b>\n\n"
-            f"Единая таможенная ставка (ЕТС): <b>{format_number(details['russiaDuty'])}₽</b>\n\n"
-            f"Оформление: <b>{format_number(details['registration'])}₽</b>\n\n"
-            f"СБКТС: <b>{format_number(details['sbkts'])}₽</b>\n\n"
-            f"СВХ + Экспертиза: <b>{format_number(details['svhAndExpertise'])}₽</b>\n\n"
+            f"Стоимость авто: <b>{car_price_formatted}$</b>\n\n"
+            f"Услуги KGA Korea: <b>{kga_export_service_fee_formatted}$</b>\n\n"
+            f"Доставка до Владивостока: <b>{delivery_fee_formatted}$</b>\n\n"
+            f"Растаможка: <b>{customs_fee_formatted}$</b>\n\n"
+            f"Оформление / Брокер: <b>{registration_fee_formatted}$</b>\n\n"
+            f"СБКТС / ЭПТС: <b>{sbkts_formatted}$</b>\n\n"
+            f"СВХ / Выгрузка: <b>{svh_formatted}$</b>\n\n\n"
+            f"<b>ПРИМЕЧАНИЕ: </b> В дальнейшем наш менеджер предоставит вам точный расчёт стоимости, учитывая актуальный курс валют на <b style='text-transform: uppercase;'>день оформления</b>. Так как стоимость авто зависит от курсы корейской воны и доллара, а стоимость растаможки в РФ - от курса евро.\n\nНе волнуйтесь, если цена немного изменится - это нормально. Ваше доверие - наш главный приоритет!\n\n"
         )
 
         bot.send_message(call.message.chat.id, detail_message, parse_mode="HTML")
@@ -790,6 +788,7 @@ def format_number(number):
 
 # Run the bot
 if __name__ == "__main__":
+    get_currency_rates()
     set_bot_commands()
     bot.polling(none_stop=True)
 
