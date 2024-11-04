@@ -98,7 +98,7 @@ def cbr_command(message):
         keyboard = types.InlineKeyboardMarkup()
         keyboard.add(
             types.InlineKeyboardButton(
-                "🔍 Рассчитать стоимость автомобиля", callback_data="calculate_another"
+                "Рассчитать стоимость автомобиля", callback_data="calculate_another"
             )
         )
 
@@ -162,35 +162,35 @@ def send_error_message(message, error_text):
     logging.error(f"Error sent to user {message.chat.id}: {error_text}")
 
 
-def solve_recaptcha_v3():
-    payload = {
-        "clientKey": CAPSOLVER_API_KEY,
-        "task": {
-            "type": "ReCaptchaV3TaskProxyLess",
-            "websiteKey": SITE_KEY,
-            "websiteURL": "http://www.encar.com:80",
-            "pageAction": "/dc/dc_cardetailview_do",
-        },
-    }
-    res = requests.post("https://api.capsolver.com/createTask", json=payload)
-    resp = res.json()
-    task_id = resp.get("taskId")
-    if not task_id:
-        print("Не удалось создать задачу:", res.text)
-        return None
-    print(f"Получен taskId: {task_id} / Ожидание результата...")
+# def solve_recaptcha_v3():
+#     payload = {
+#         "clientKey": CAPSOLVER_API_KEY,
+#         "task": {
+#             "type": "ReCaptchaV3TaskProxyLess",
+#             "websiteKey": SITE_KEY,
+#             "websiteURL": "http://www.encar.com:80",
+#             "pageAction": "/dc/dc_cardetailview_do",
+#         },
+#     }
+#     res = requests.post("https://api.capsolver.com/createTask", json=payload)
+#     resp = res.json()
+#     task_id = resp.get("taskId")
+#     if not task_id:
+#         print("Не удалось создать задачу:", res.text)
+#         return None
+#     print(f"Получен taskId: {task_id} / Ожидание результата...")
 
-    while True:
-        time.sleep(1)
-        payload = {"clientKey": CAPSOLVER_API_KEY, "taskId": task_id}
-        res = requests.post("https://api.capsolver.com/getTaskResult", json=payload)
-        resp = res.json()
-        if resp.get("status") == "ready":
-            print("reCAPTCHA успешно решена")
-            return resp.get("solution", {}).get("gRecaptchaResponse")
-        if resp.get("status") == "failed" or resp.get("errorId"):
-            print("Решение не удалось! Ответ:", res.text)
-            return None
+#     while True:
+#         time.sleep(1)
+#         payload = {"clientKey": CAPSOLVER_API_KEY, "taskId": task_id}
+#         res = requests.post("https://api.capsolver.com/getTaskResult", json=payload)
+#         resp = res.json()
+#         if resp.get("status") == "ready":
+#             print("reCAPTCHA успешно решена")
+#             return resp.get("solution", {}).get("gRecaptchaResponse")
+#         if resp.get("status") == "failed" or resp.get("errorId"):
+#             print("Решение не удалось! Ответ:", res.text)
+#             return None
 
 
 def save_cookies(driver):
@@ -410,7 +410,7 @@ def calculate_cost(link, message):
         )
         keyboard.add(
             types.InlineKeyboardButton(
-                "🔍 Рассчитать стоимость другого автомобиля",
+                "Рассчитать стоимость другого автомобиля",
                 callback_data="calculate_another",
             ),
         )
@@ -435,7 +435,7 @@ def calculate_cost(link, message):
             price = json_response.get("result")["price"]["car"]["krw"]
 
             if year and engine_volume and price:
-                engine_volume_formatted = f"{engine_volume} cc"
+                engine_volume_formatted = f"{format_number(int(engine_volume))} cc"
                 age_formatted = calculate_age(year)
 
                 total_cost = int(
@@ -446,10 +446,8 @@ def calculate_cost(link, message):
                     ]
                 )
                 total_cost_formatted_rub = format_number(total_cost)
-                total_cost_formatted_usd = format_number(total_cost / (usd_rate + 1))
+                total_cost_formatted_usd = format_number(total_cost / usd_rate)
                 price_formatted = format_number(price)
-
-                print(usd_rate + 1)
 
                 result_message = (
                     f"Возраст: {age_formatted}\n"
@@ -467,23 +465,23 @@ def calculate_cost(link, message):
                 keyboard = types.InlineKeyboardMarkup()
                 keyboard.add(
                     types.InlineKeyboardButton(
-                        "📊 Детализация расчёта", callback_data="detail"
+                        "Детализация расчёта", callback_data="detail"
                     ),
                 )
                 keyboard.add(
                     types.InlineKeyboardButton(
-                        "📝 Технический отчёт об автомобиле",
+                        "Технический отчёт об автомобиле",
                         callback_data="technical_report",
                     ),
                 )
                 keyboard.add(
                     types.InlineKeyboardButton(
-                        "✉️ Связаться с менеджером", url="https://t.me/alekseyan85"
+                        "Связаться с менеджером", url="https://t.me/alekseyan85"
                     ),
                 )
                 keyboard.add(
                     types.InlineKeyboardButton(
-                        "🔍 Рассчитать стоимость другого автомобиля",
+                        "Рассчитать стоимость другого автомобиля",
                         callback_data="calculate_another",
                     ),
                 )
@@ -602,15 +600,13 @@ def handle_callback_query(call):
         }
 
         # Formatted numbers
-        car_price_formatted = format_number(details["car_price_korea"] / (usd_rate + 1))
+        car_price_formatted = format_number(details["car_price_korea"] / (usd_rate))
         kga_export_service_fee_formatted = format_number(600)
         delivery_fee_formatted = format_number(600)
-        customs_fee_formatted = format_number(details["customs_fee"] / (usd_rate + 1))
-        registration_fee_formatted = format_number(
-            details["registration"] / (usd_rate + 1)
-        )
-        sbkts_formatted = format_number(details["svhAndExpertise"] / (usd_rate + 1))
-        svh_formatted = format_number(details["sbkts"] / (usd_rate + 1))
+        customs_fee_formatted = format_number(details["customs_fee"] / (usd_rate))
+        registration_fee_formatted = format_number(25000 / usd_rate)
+        sbkts_formatted = format_number(details["svhAndExpertise"] / (usd_rate))
+        svh_formatted = format_number(details["sbkts"] / (usd_rate))
 
         # Construct cost breakdown message
         detail_message = (
@@ -631,13 +627,13 @@ def handle_callback_query(call):
         keyboard = types.InlineKeyboardMarkup()
         keyboard.add(
             types.InlineKeyboardButton(
-                "📉 Рассчитать стоимость другого автомобиля",
+                "Рассчитать стоимость другого автомобиля",
                 callback_data="calculate_another",
             )
         )
         keyboard.add(
             types.InlineKeyboardButton(
-                "✉️ Связаться с менеджером", url="https://t.me/alekseyan85"
+                "Связаться с менеджером", url="https://t.me/alekseyan85"
             )
         )
 
@@ -660,13 +656,13 @@ def handle_callback_query(call):
             keyboard = types.InlineKeyboardMarkup()
             keyboard.add(
                 types.InlineKeyboardButton(
-                    "📉 Рассчитать стоимость другого автомобиля",
+                    "Рассчитать стоимость другого автомобиля",
                     callback_data="calculate_another",
                 )
             )
             keyboard.add(
                 types.InlineKeyboardButton(
-                    "✉️ Связаться с менеджером", url="https://t.me/alekseyan85"
+                    "Связаться с менеджером", url="https://t.me/alekseyan85"
                 )
             )
 
@@ -696,13 +692,13 @@ def handle_callback_query(call):
             keyboard = types.InlineKeyboardMarkup()
             keyboard.add(
                 types.InlineKeyboardButton(
-                    "📉 Рассчитать стоимость другого автомобиля",
+                    "Рассчитать стоимость другого автомобиля",
                     callback_data="calculate_another",
                 )
             )
             keyboard.add(
                 types.InlineKeyboardButton(
-                    "✉️ Связаться с менеджером", url="https://t.me/alekseyan85"
+                    "Связаться с менеджером", url="https://t.me/alekseyan85"
                 )
             )
 
