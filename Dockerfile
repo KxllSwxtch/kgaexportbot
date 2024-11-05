@@ -1,24 +1,29 @@
-# Указываем базовый образ
+# Используйте официальный образ Python в качестве базового
 FROM python:3.11-slim
 
-# Установка зависимостей
+# Установка необходимых зависимостей
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
-    && wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip \
-    && unzip chromedriver_linux64.zip -d /usr/local/bin/ \
-    && rm chromedriver_linux64.zip \
-    && apt-get install -y \
-    google-chrome \
     && apt-get clean
 
-# Установка Python зависимостей
-WORKDIR /app
-COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Копируем файл chromedriver в контейнер
+COPY path/to/chromedriver /usr/local/bin/chromedriver
 
-# Копирование приложения
+# Устанавливаем права на выполнение для chromedriver
+RUN chmod +x /usr/local/bin/chromedriver
+
+# Установка рабочей директории
+WORKDIR /app
+
+# Копируем файлы приложения в контейнер
 COPY . .
 
-# Команда запуска
-CMD ["python3", "kga.py"]
+# Установка зависимостей
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Указываем порт, который будет использовать приложение
+EXPOSE 8000
+
+# Команда для запуска приложения
+CMD ["python", "kga.py"]
