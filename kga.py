@@ -42,7 +42,7 @@ bot_token = os.getenv("BOT_TOKEN")
 bot = telebot.TeleBot(bot_token)
 
 # Set locale for number formatting
-locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
+# locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
 # Storage for the last error message ID
 last_error_message_id = {}
