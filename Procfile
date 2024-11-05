@@ -1,1 +1,1 @@
-worker: python hanex.py
+worker: python kga.py
