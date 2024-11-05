@@ -1,5 +1,3 @@
-import http.server
-import socketserver
 import time
 import pickle
 import telebot
@@ -22,9 +20,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoAlertPresentException
 
-PORT = int(os.environ.get("PORT", 8000))
-
-# CapSolver API key
 CAPSOLVER_API_KEY = os.getenv("CAPSOLVER_API_KEY")  # Замените на ваш API-ключ CapSolver
 # CHROMEDRIVER_PATH = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
 CHROMEDRIVER_PATH = "/usd/local/bin/chromedriver"
@@ -820,11 +815,6 @@ def format_number(number):
 
 # Run the bot
 if __name__ == "__main__":
-    Handler = http.server.SimpleHTTPRequestHandler
-    with socketserver.TCPServer(("", PORT), Handler) as httpd:
-        print("Serving at port", PORT)
-        httpd.serve_forever()
-
     get_currency_rates()
     set_bot_commands()
     bot.polling(none_stop=True)
