@@ -7,13 +7,12 @@ RUN apt-get update && apt-get install -y \
     chromium \
     && apt-get clean
 
-# Скачиваем chromedriver
-RUN CHROMEDRIVER_VERSION=$(wget -qO- https://chromedriver.storage.googleapis.com/LATEST_RELEASE) && \
-    wget -N https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip && \
-    unzip chromedriver_linux64.zip && \
-    mv chromedriver /usr/local/bin/ && \
-    chmod +x /usr/local/bin/chromedriver && \
-    rm chromedriver_linux64.zip
+# Копируем ваш chromedriver в контейнер
+COPY chromedriver /usr/local/bin/chromedriver
+RUN chmod +x /usr/local/bin/chromedriver
+
+# Проверяем, что chromedriver доступен
+RUN chromedriver --version
 
 # Копируем ваш код
 COPY . /app

@@ -22,7 +22,8 @@ from selenium.common.exceptions import NoAlertPresentException
 
 CAPSOLVER_API_KEY = os.getenv("CAPSOLVER_API_KEY")  # Замените на ваш API-ключ CapSolver
 # CHROMEDRIVER_PATH = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
-CHROMEDRIVER_PATH = "/usd/local/bin/chromedriver"
+# CHROMEDRIVER_PATH = "/usd/local/bin/chromedriver"
+CHROMEDRIVER_PATH = "./chromedriver"
 COOKIES_FILE = "cookies.pkl"
 
 session = requests.Session()
