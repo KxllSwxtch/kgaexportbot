@@ -1,26 +1,27 @@
-# Используем официальный образ Python 3.11
+# Используем базовый образ Python
 FROM python:3.11-slim
 
-# Устанавливаем необходимые системные зависимости
-RUN apt-get update && apt-get install -y \
+# Устанавливаем необходимые пакеты
+RUN apt-get update && \
+    apt-get install -y \
     wget \
     unzip \
     && apt-get clean
 
-# Копируем файл chromedriver в контейнер
+# Копируем Chromedriver
 COPY chromedriver /usr/local/bin/chromedriver
 
-# Устанавливаем права на выполнение для chromedriver
+# Устанавливаем права на выполнение для Chromedriver
 RUN chmod +x /usr/local/bin/chromedriver
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем все файлы проекта в рабочую директорию
+# Копируем файлы приложения
 COPY . .
 
-# Устанавливаем зависимости из requirements.txt
+# Устанавливаем зависимости
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Указываем команду для запуска вашего приложения
-CMD ["python", "kga.py"]
+# Команда для запуска бота
+CMD ["python", "your_bot_file.py"]
