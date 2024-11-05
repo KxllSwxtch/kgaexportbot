@@ -1,29 +1,26 @@
-# Используйте официальный образ Python в качестве базового
+# Используем официальный образ Python 3.11
 FROM python:3.11-slim
 
-# Установка необходимых зависимостей
+# Устанавливаем необходимые системные зависимости
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
     && apt-get clean
 
 # Копируем файл chromedriver в контейнер
-COPY path/to/chromedriver /usr/local/bin/chromedriver
+COPY chromedriver /usr/local/bin/chromedriver
 
 # Устанавливаем права на выполнение для chromedriver
 RUN chmod +x /usr/local/bin/chromedriver
 
-# Установка рабочей директории
+# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем файлы приложения в контейнер
+# Копируем все файлы проекта в рабочую директорию
 COPY . .
 
-# Установка зависимостей
+# Устанавливаем зависимости из requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Указываем порт, который будет использовать приложение
-EXPOSE 8000
-
-# Команда для запуска приложения
+# Указываем команду для запуска вашего приложения
 CMD ["python", "kga.py"]
