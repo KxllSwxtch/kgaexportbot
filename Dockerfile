@@ -1,27 +1,27 @@
-# Используем базовый образ Python
 FROM python:3.11-slim
 
 # Устанавливаем необходимые пакеты
-RUN apt-get update && \
-    apt-get install -y \
+RUN apt-get update && apt-get install -y \
     wget \
     unzip \
+    chromium \
     && apt-get clean
 
-# Копируем Chromedriver
-COPY chromedriver /usr/local/bin/chromedriver
+# Скачиваем chromedriver
+RUN CHROMEDRIVER_VERSION=$(wget -qO- https://chromedriver.storage.googleapis.com/LATEST_RELEASE) && \
+    wget -N https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip && \
+    unzip chromedriver_linux64.zip && \
+    mv chromedriver /usr/local/bin/ && \
+    chmod +x /usr/local/bin/chromedriver && \
+    rm chromedriver_linux64.zip
 
-# Устанавливаем права на выполнение для Chromedriver
-RUN chmod +x /usr/local/bin/chromedriver
+# Копируем ваш код
+COPY . /app
 
-# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем файлы приложения
-COPY . .
-
 # Устанавливаем зависимости
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
-# Команда для запуска бота
+# Запускаем приложение
 CMD ["python", "kga.py"]
