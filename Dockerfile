@@ -11,9 +11,6 @@ RUN apt-get update && apt-get install -y \
 COPY chromedriver /usr/local/bin/chromedriver
 RUN chmod +x /usr/local/bin/chromedriver
 
-# Проверяем, что chromedriver доступен
-RUN chromedriver --version
-
 # Копируем ваш код
 COPY . /app
 
