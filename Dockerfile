@@ -24,4 +24,4 @@ COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Команда для запуска бота
-CMD ["python", "your_bot_file.py"]
+CMD ["python", "kga.py"]
