@@ -69,10 +69,10 @@ def get_currency_rates():
     data = response.json()
 
     # Получаем курсы валют
-    eur_rate = data["Valute"]["EUR"]["Value"] + 2
-    usd_rate = data["Valute"]["USD"]["Value"] + 2
+    eur_rate = data["Valute"]["EUR"]["Value"]
+    usd_rate = data["Valute"]["USD"]["Value"]
     krw_rate = data["Valute"]["KRW"]["Value"] / data["Valute"]["KRW"]["Nominal"]
-    cny_rate = data["Valute"]["CNY"]["Value"] + 2
+    cny_rate = data["Valute"]["CNY"]["Value"]
 
     # Форматируем текст
     rates_text = (
