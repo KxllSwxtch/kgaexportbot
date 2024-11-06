@@ -1,10 +1,11 @@
+# Базовый образ
 FROM python:3.11-slim
 
 # Устанавливаем необходимые пакеты
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
-    chromium=114.0.5735.16-1 \
+    ca-certificates \
     && apt-get clean
 
 # Устанавливаем chromedriver версии 114.0.5735.16
@@ -13,6 +14,9 @@ RUN wget https://chromedriver.storage.googleapis.com/114.0.5735.16/chromedriver_
     mv chromedriver /usr/local/bin/ && \
     chmod +x /usr/local/bin/chromedriver && \
     rm chromedriver_linux64.zip
+
+# Проверяем версию установленного chromium на Railway
+RUN chromium --version
 
 # Копируем ваш код
 COPY . /app
