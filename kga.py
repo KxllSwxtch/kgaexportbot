@@ -1,3 +1,4 @@
+import chromedriver_autoinstaller
 import time
 import pickle
 import telebot
@@ -19,6 +20,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoAlertPresentException
+
+# Автоматическая загрузка подходящего chromedriver
+chromedriver_autoinstaller.install()
 
 CAPSOLVER_API_KEY = os.getenv("CAPSOLVER_API_KEY")  # Замените на ваш API-ключ CapSolver
 CHROMEDRIVER_PATH = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
