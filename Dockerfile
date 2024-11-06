@@ -1,23 +1,24 @@
+# Начальная стадия с базой Python
 FROM python:3.11-slim
 
-# Устанавливаем необходимые пакеты
+# Установка необходимых пакетов и версии Chromium 130
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
     chromium \
     && apt-get clean
 
-# Копируем ваш chromedriver в контейнер
-COPY chromedriver /usr/local/bin/chromedriver
-RUN chmod +x /usr/local/bin/chromedriver
+# Установка ChromeDriver, совместимого с Chromium 130
+RUN wget -N https://chromedriver.storage.googleapis.com/130.0.6723.91/chromedriver_linux64.zip && \
+    unzip chromedriver_linux64.zip && \
+    mv chromedriver /usr/local/bin/ && \
+    chmod +x /usr/local/bin/chromedriver && \
+    rm chromedriver_linux64.zip
 
-# Копируем ваш код
+# Копирование кода и установка зависимостей
 COPY . /app
-
 WORKDIR /app
-
-# Устанавливаем зависимости
 RUN pip install -r requirements.txt
 
-# Запускаем приложение
+# Запуск приложения
 CMD ["python", "kga.py"]
