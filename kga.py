@@ -240,20 +240,19 @@ def get_car_info(url):
     service = Service(CHROMEDRIVER_PATH)
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
-    driver.get(url)
-    load_cookies(driver)
-
     try:
-        driver.get(url)
-        check_and_handle_alert(driver)
+        driver.get(url)  # Однократный вызов get для загрузки страницы
+        check_and_handle_alert(driver)  # Проверка и обработка alert сразу
 
+        load_cookies(driver)  # Загрузить cookies (если необходимо)
+
+        # Проверка на наличие reCAPTCHA
         if "reCAPTCHA" in driver.page_source:
             print("Обнаружена reCAPTCHA. Пытаемся решить...")
             check_and_handle_alert(driver)
             driver.refresh()
 
-        # Сохранение куки после успешного решения reCAPTCHA или загрузки страницы
-        save_cookies(driver)
+        save_cookies(driver)  # Сохранение cookies после загрузки страницы
 
         # Парсим URL для получения carid
         parsed_url = urlparse(url)
@@ -265,7 +264,6 @@ def get_car_info(url):
         try:
             lease_area = driver.find_element(By.ID, "areaLeaseRent")
             title_element = lease_area.find_element(By.CLASS_NAME, "title")
-
             if "리스정보" in title_element.text or "렌트정보" in title_element.text:
                 return [
                     "",
@@ -281,7 +279,6 @@ def get_car_info(url):
         try:
             product_left = driver.find_element(By.CLASS_NAME, "product_left")
             product_left_splitted = product_left.text.split("\n")
-
             prod_name = product_left.find_element(By.CLASS_NAME, "prod_name")
 
             car_title = prod_name.text.strip()
@@ -294,7 +291,6 @@ def get_car_info(url):
             cleaned_date = "".join(filter(str.isdigit, car_date))
             formatted_date = f"01{cleaned_date[2:4]}{cleaned_date[:2]}"
 
-            # Создание URL для передачи данных
             new_url = f"https://plugin-back-versusm.amvera.io/car-ab-korea/{car_id}?price={formatted_price}&date={formatted_date}&volume={formatted_engine_capacity}"
             return [new_url, car_title]
 
@@ -305,7 +301,6 @@ def get_car_info(url):
                 gallery_element = driver.find_element(
                     By.CSS_SELECTOR, "div.gallery_photo"
                 )
-
                 prod_name = gallery_element.find_element(By.CLASS_NAME, "prod_name")
                 car_title = prod_name.text
 
@@ -341,7 +336,6 @@ def get_car_info(url):
         cleaned_date = "".join(filter(str.isdigit, car_date))
         formatted_date = f"01{cleaned_date[2:4]}{cleaned_date[:2]}"
 
-        # Конечный URL
         new_url = f"https://plugin-back-versusm.amvera.io/car-ab-korea/{car_id}?price={formatted_price}&date={formatted_date}&volume={formatted_engine_capacity}"
 
         return [new_url, car_title]
@@ -351,16 +345,7 @@ def get_car_info(url):
         return None, None
 
     finally:
-        # Обработка всплывающих окон (alerts)
-        try:
-            alert = driver.switch_to.alert
-            alert.dismiss()  # Или alert.dismiss(), если хотите закрыть alert
-        except NoAlertPresentException:
-            print("Нет активного всплывающего окна.")
-        except Exception as alert_exception:
-            print(f"Ошибка при обработке alert: {alert_exception}")
-
-        driver.quit()
+        driver.quit()  # Закрытие драйвера
 
 
 # Function to calculate the total cost
