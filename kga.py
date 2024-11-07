@@ -69,6 +69,14 @@ def check_subscription(user_id):
         return False
 
 
+# Функция для создания кнопки "Готово!"
+def get_ready_button():
+    markup = types.InlineKeyboardMarkup()
+    ready_button = types.InlineKeyboardButton("Готово!", callback_data="ready")
+    markup.add(ready_button)
+    return markup
+
+
 # Функция для установки команд меню
 def set_bot_commands():
     commands = [
@@ -147,16 +155,35 @@ def send_welcome(message):
     user_id = message.from_user.id
     user_first_name = message.from_user.first_name
 
+    # Приветственное сообщение
+    welcome_message = (
+        f"Здравствуйте, {user_first_name}!\n"
+        "Рад приветствовать вас! Я бот компании KGA KOREA, я помогу вам рассчитать стоимость автомобиля до Владивостока. 🚗💰\n\n"
+        "Для начала, пожалуйста, подпишитесь на канал @kga_korea.\n"
+        "Когда будете готовы, нажмите кнопку ниже."
+    )
+    bot.send_message(message.chat.id, welcome_message, reply_markup=get_ready_button())
+
+
+# Обработка нажатия на кнопку "Готово!"
+@bot.callback_query_handler(func=lambda call: call.data == "ready")
+def handle_ready_button(call):
+    user_id = call.from_user.id
+
     if check_subscription(user_id):
-        welcome_message = (
-            f"Здравствуйте, {user_first_name}!\n"
-            "Рад приветствовать вас! Я бот компании KGA KOREA, я помогу вам рассчитать стоимость автомобиля до Владивостока. 🚗💰\n\n"
-            "Выберите действие в меню ниже, и давайте начнём!"
+        bot.answer_callback_query(
+            call.id, text="Вы подписаны на канал! Теперь можете использовать бота."
         )
-        bot.send_message(message.chat.id, welcome_message, reply_markup=main_menu())
-    else:
         bot.send_message(
-            message.chat.id,
+            call.message.chat.id,
+            "Теперь вы можете воспользоваться ботом! Чем могу помочь?",
+        )
+    else:
+        bot.answer_callback_query(
+            call.id, text="Вы не подписаны на канал. Подпишитесь и попробуйте снова."
+        )
+        bot.send_message(
+            call.message.chat.id,
             "Чтобы пользоваться ботом, сначала подпишитесь на канал @kga_korea.",
         )
 
