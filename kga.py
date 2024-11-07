@@ -250,17 +250,22 @@ def load_cookies(driver):
                 driver.add_cookie(cookie)
 
 
-def check_and_handle_alert(driver):
-    try:
-        WebDriverWait(driver, 1).until(EC.alert_is_present())
-        alert = driver.switch_to.alert
-        print(f"Обнаружено всплывающее окно: {alert.text}")
-        alert.accept()
-        print("Всплывающее окно было закрыто.")
-    except TimeoutException:
-        print("Нет активного всплывающего окна.")
-    except Exception as alert_exception:
-        print(f"Ошибка при обработке alert: {alert_exception}")
+def check_and_handle_alert(driver, retries=3):
+    for attempt in range(retries):
+        try:
+            # Ждём, пока alert появится, если он есть
+            WebDriverWait(driver, 2).until(EC.alert_is_present())
+            alert = driver.switch_to.alert
+            print(f"Обнаружено всплывающее окно: {alert.text}")
+            alert.accept()  # Закрывает alert
+            print("Всплывающее окно было закрыто.")
+            time.sleep(2)  # Подождём немного, чтобы убедиться, что алерт не повторится
+        except TimeoutException:
+            print("Нет активного всплывающего окна.")
+            break
+        except Exception as alert_exception:
+            print(f"Ошибка при обработке alert: {alert_exception}")
+            break
 
 
 def get_car_info(url):
