@@ -293,13 +293,14 @@ def get_car_info(url):
         load_cookies(driver)
 
         # Проверка на наличие reCAPTCHA
-        if "reCAPTCHA" in driver.page_source:
-            print("Обнаружена reCAPTCHA. Пытаемся решить...")
-            driver.refresh()
-            logging.info("Страница обновлена после reCAPTCHA.")
-            check_and_handle_alert(driver)  # Повторная проверка
+        # if "reCAPTCHA" in driver.page_source:
+        #     print("Обнаружена reCAPTCHA. Пытаемся решить...")
+        #     driver.refresh()
+        #     logging.info("Страница обновлена после reCAPTCHA.")
+        #     check_and_handle_alert(driver)  # Повторная проверка
 
         save_cookies(driver)
+        logging.info("Куки сохранены.")
 
         # Парсинг URL для car_id
         parsed_url = urlparse(url)
@@ -311,6 +312,7 @@ def get_car_info(url):
         try:
             lease_area = driver.find_element(By.ID, "areaLeaseRent")
             title_element = lease_area.find_element(By.CLASS_NAME, "title")
+
             if "리스정보" in title_element.text or "렌트정보" in title_element.text:
                 return [
                     "",
