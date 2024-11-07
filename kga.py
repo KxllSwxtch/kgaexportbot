@@ -24,6 +24,7 @@ CAPSOLVER_API_KEY = os.getenv("CAPSOLVER_API_KEY")  # Замените на ва
 CHROMEDRIVER_PATH = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
 # CHROMEDRIVER_PATH = "/usd/local/bin/chromedriver"
 COOKIES_FILE = "cookies.pkl"
+CHANNEL_USERNAME = "@kga_korea"
 
 session = requests.Session()
 
@@ -49,6 +50,23 @@ last_error_message_id = {}
 car_data = {}
 car_id_external = ""
 usd_rate = None
+
+
+# Проверяем подписан ли пользователь на канал
+def check_subscription(user_id):
+    try:
+        chat_member = bot.get_chat_member(CHANNEL_USERNAME, user_id)
+        if chat_member.status in [
+            "member",
+            "administrator",
+            "creator",
+        ]:  # Статус участника
+            return True
+        else:
+            return False
+    except Exception as e:
+        print(f"Ошибка при проверке подписки: {e}")
+        return False
 
 
 # Функция для установки команд меню
@@ -109,14 +127,6 @@ def cbr_command(message):
         print(f"Ошибка при получении курсов валют: {e}")
 
 
-# Обработчик команды /currencyrates
-@bot.message_handler(commands=["currencyrates"])
-def currencyrates_command(message):
-    bot.send_message(
-        message.chat.id, "Актуальные курсы валют: ..."
-    )  # Логика для курсов валют
-
-
 # Main menu creation function
 def main_menu():
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
@@ -134,13 +144,21 @@ def main_menu():
 # Start command handler
 @bot.message_handler(commands=["start"])
 def send_welcome(message):
+    user_id = message.from_user.id
     user_first_name = message.from_user.first_name
-    welcome_message = (
-        f"Здравствуйте, {user_first_name}!\n"
-        "Рад приветствовать вас! Я бот компании KGA KOREA, я помогу вам рассчитать стоимость автомобиля до Владивостока. 🚗💰\n\n"
-        "Выберите действие в меню ниже, и давайте начнём!"
-    )
-    bot.send_message(message.chat.id, welcome_message, reply_markup=main_menu())
+
+    if check_subscription(user_id):
+        welcome_message = (
+            f"Здравствуйте, {user_first_name}!\n"
+            "Рад приветствовать вас! Я бот компании KGA KOREA, я помогу вам рассчитать стоимость автомобиля до Владивостока. 🚗💰\n\n"
+            "Выберите действие в меню ниже, и давайте начнём!"
+        )
+        bot.send_message(message.chat.id, welcome_message, reply_markup=main_menu())
+    else:
+        bot.send_message(
+            message.chat.id,
+            "Чтобы пользоваться ботом, сначала подпишитесь на канал @kga_korea.",
+        )
 
 
 # Error handling function
