@@ -152,7 +152,6 @@ def main_menu():
 # Start command handler
 @bot.message_handler(commands=["start"])
 def send_welcome(message):
-    user_id = message.from_user.id
     user_first_name = message.from_user.first_name
 
     # Приветственное сообщение
@@ -177,6 +176,7 @@ def handle_ready_button(call):
         bot.send_message(
             call.message.chat.id,
             "Теперь вы можете воспользоваться ботом! Чем могу помочь?",
+            reply_markup=main_menu(),
         )
     else:
         bot.answer_callback_query(
