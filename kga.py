@@ -257,7 +257,7 @@ def check_and_handle_alert(driver, retries=3):
             WebDriverWait(driver, 3).until(EC.alert_is_present())
             alert = driver.switch_to.alert
             print(f"Обнаружено всплывающее окно: {alert.text}")
-            alert.close()  # Закрывает alert
+            alert.accept()  # Закрывает alert
             print("Всплывающее окно было закрыто.")
             time.sleep(3)  # Подождём немного, чтобы убедиться, что алерт не повторится
         except TimeoutException:
@@ -383,9 +383,6 @@ def get_car_info(url):
                 ]
         except NoSuchElementException:
             print("Элемент areaLeaseRent не найден.")
-
-        # Инициализация переменных
-        car_title, car_date, car_engine_capacity, car_price = "", "", "", ""
 
         # Проверка элемента product_left
         car_info = parse_product_info(driver)
