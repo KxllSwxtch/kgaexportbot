@@ -300,12 +300,12 @@ def get_car_info(url):
         load_cookies(driver)
 
         # Проверка на наличие reCAPTCHA
-        if "reCAPTCHA" in driver.page_source:
-            time.sleep(2)
-            print("Обнаружена reCAPTCHA. Пытаемся решить...")
-            driver.refresh()
-            logging.info("Страница обновлена после reCAPTCHA.")
-            check_and_handle_alert(driver, retries=5)  # Повторная проверка
+        # if "reCAPTCHA" in driver.page_source:
+        #     time.sleep(2)
+        #     print("Обнаружена reCAPTCHA. Пытаемся решить...")
+        #     driver.refresh()
+        #     logging.info("Страница обновлена после reCAPTCHA.")
+        #     check_and_handle_alert(driver, retries=5)  # Повторная проверка
 
         save_cookies(driver)
         logging.info("Куки сохранены.")
