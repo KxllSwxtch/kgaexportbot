@@ -257,7 +257,7 @@ def check_and_handle_alert(driver, retries=3):
             WebDriverWait(driver, 3).until(EC.alert_is_present())
             alert = driver.switch_to.alert
             print(f"Обнаружено всплывающее окно: {alert.text}")
-            alert.accept()  # Закрывает alert
+            alert.close()  # Закрывает alert
             print("Всплывающее окно было закрыто.")
             time.sleep(3)  # Подождём немного, чтобы убедиться, что алерт не повторится
         except TimeoutException:
@@ -266,88 +266,6 @@ def check_and_handle_alert(driver, retries=3):
         except Exception as alert_exception:
             print(f"Ошибка при обработке alert: {alert_exception}")
             break
-
-
-def extract_price_from_keyinfo(driver, wait, car_info):
-    """Функция для извлечения цены из элемента wrap_keyinfo."""
-    try:
-        keyinfo_element = wait.until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "div.wrap_keyinfo"))
-        )
-        keyinfo_texts = [
-            item.text
-            for item in wait.until(
-                EC.presence_of_all_elements_located((By.XPATH, "div.wrap_keyinfo//*"))
-            )
-            if item.text.strip() != ""
-        ]
-
-        if len(keyinfo_texts) > 12:
-            car_info["price"] = re.sub(r"\D", "", keyinfo_texts[12])
-
-    except NoSuchElementException:
-        print("Элемент wrap_keyinfo не найден.")
-
-
-def extract_info_from_gallery(driver, wait, car_info):
-    """Функция для извлечения информации о машине из элемента gallery_photo при отсутствии product_left."""
-    try:
-        gallery_element = wait.until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "div.gallery_photo"))
-        )
-        car_info["title"] = gallery_element.find_element(
-            By.CLASS_NAME, "prod_name"
-        ).text
-
-        items = wait.until(
-            EC.presence_of_all_elements_located((By.XPATH, "div.gallery_photo//*"))
-        )
-
-        for index, item in enumerate(items):
-            if index == 10:
-                car_info["date"] = item.text
-            elif index == 18:
-                car_info["engine_capacity"] = item.text
-
-        # Попытка получить цену из элемента wrap_keyinfo
-        extract_price_from_keyinfo(driver, wait, car_info)
-
-    except NoSuchElementException:
-        print("Элемент gallery_photo также не найден.")
-
-
-def parse_product_info(driver, wait):
-    """Функция для извлечения информации о машине из элементов product_left или gallery_photo."""
-    car_info = {"title": "", "date": "", "engine_capacity": "", "price": ""}
-
-    # Основной блок - проверка и извлечение из product_left
-    try:
-        product_left = wait.until(
-            EC.presence_of_element_located((By.CLASS_NAME, "product_left"))
-        )
-        product_left_splitted = product_left.text.split("\n")
-
-        car_info["title"] = product_left.find_element(
-            By.CLASS_NAME, "prod_name"
-        ).text.strip()
-        car_info["date"] = (
-            product_left_splitted[3] if len(product_left_splitted) > 3 else ""
-        )
-        car_info["engine_capacity"] = (
-            product_left_splitted[6] if len(product_left_splitted) > 6 else ""
-        )
-        car_info["price"] = re.sub(
-            r"\D",
-            "",
-            product_left_splitted[1] if len(product_left_splitted) > 1 else "",
-        )
-
-    except NoSuchElementException:
-        print("Элемент product_left не найден. Переходим к gallery_photo.")
-        # Альтернативный блок - проверка и извлечение из gallery_photo
-        extract_info_from_gallery(driver, wait, car_info)
-
-    return car_info
 
 
 def get_car_info(url):
@@ -368,7 +286,6 @@ def get_car_info(url):
 
     service = Service(CHROMEDRIVER_PATH)
     driver = webdriver.Chrome(service=service, options=chrome_options)
-    wait = WebDriverWait(driver, 5)
 
     try:
         driver.get(url)
@@ -404,27 +321,61 @@ def get_car_info(url):
         except NoSuchElementException:
             print("Элемент areaLeaseRent не найден.")
 
+        # Инициализация переменных
+        car_title, car_date, car_engine_capacity, car_price = "", "", "", ""
+
         # Проверка элемента product_left
-        car_info = parse_product_info(driver, wait)
+        try:
+            product_left = driver.find_element(By.CLASS_NAME, "product_left")
+            product_left_splitted = product_left.text.split("\n")
+            prod_name = product_left.find_element(By.CLASS_NAME, "prod_name")
+
+            car_title = prod_name.text.strip()
+            car_date = product_left_splitted[3]
+            car_engine_capacity = product_left_splitted[6]
+            car_price = re.sub(r"\D", "", product_left_splitted[1])
+
+        except NoSuchElementException:
+            print("Элемент product_left не найден. Переходим к gallery_photo.")
+            # Альтернативное получение данных
+            try:
+                gallery_element = driver.find_element(
+                    By.CSS_SELECTOR, "div.gallery_photo"
+                )
+                prod_name = gallery_element.find_element(By.CLASS_NAME, "prod_name")
+                car_title = prod_name.text
+                items = gallery_element.find_elements(By.XPATH, ".//*")
+                for index, item in enumerate(items):
+                    if index == 10:
+                        car_date = item.text
+                    if index == 18:
+                        car_engine_capacity = item.text
+                try:
+                    keyinfo_element = driver.find_element(
+                        By.CSS_SELECTOR, "div.wrap_keyinfo"
+                    )
+                    keyinfo_items = keyinfo_element.find_elements(By.XPATH, ".//*")
+                    keyinfo_texts = [
+                        item.text for item in keyinfo_items if item.text.strip() != ""
+                    ]
+                    for index, info in enumerate(keyinfo_texts):
+                        if index == 12:
+                            car_price = re.sub(r"\D", "", info)
+                except NoSuchElementException:
+                    print("Элемент wrap_keyinfo не найден.")
+            except NoSuchElementException:
+                print("Элемент gallery_photo также не найден.")
 
         # Проверка и форматирование значений
-        formatted_price = (
-            car_info["price"].replace(",", "") if car_info["price"] else "0"
-        )
+        formatted_price = car_price.replace(",", "") if car_price else "0"
         formatted_engine_capacity = (
-            car_info["engine_capacity"].replace(",", "")[0:-2]
-            if car_info["engine_capacity"]
-            else "0"
+            car_engine_capacity.replace(",", "")[0:-2] if car_engine_capacity else "0"
         )
-        cleaned_date = (
-            "".join(filter(str.isdigit, car_info["date"]))
-            if car_info["date"]
-            else "000000"
-        )
+        cleaned_date = "".join(filter(str.isdigit, car_date)) if car_date else "000000"
         formatted_date = f"01{cleaned_date[2:4]}{cleaned_date[:2]}"
 
         new_url = f"https://plugin-back-versusm.amvera.io/car-ab-korea/{car_id}?price={formatted_price}&date={formatted_date}&volume={formatted_engine_capacity}"
-        return [new_url, car_info["title"]]
+        return [new_url, car_title]
 
     except Exception as e:
         print(f"Произошла ошибка: {e}")
