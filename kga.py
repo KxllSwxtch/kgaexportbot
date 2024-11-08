@@ -309,7 +309,6 @@ def get_car_info(url):
         if "reCAPTCHA" in driver.page_source:
             print("Обнаружена reCAPTCHA. Пытаемся решить...")
             driver.refresh()
-            time.sleep(3)
             logging.info("Страница обновлена после reCAPTCHA.")
             check_and_handle_alert(driver)  # Повторная проверка
 
@@ -340,7 +339,9 @@ def get_car_info(url):
 
         # Проверка элемента product_left
         try:
-            product_left = driver.find_element(By.CLASS_NAME, "product_left")
+            product_left = WebDriverWait(driver, 6).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "product_left"))
+            )
             product_left_splitted = product_left.text.split("\n")
             prod_name = product_left.find_element(By.CLASS_NAME, "prod_name")
 
@@ -353,8 +354,10 @@ def get_car_info(url):
             print("Элемент product_left не найден. Переходим к gallery_photo.")
             # Альтернативное получение данных
             try:
-                gallery_element = driver.find_element(
-                    By.CSS_SELECTOR, "div.gallery_photo"
+                gallery_element = WebDriverWait(driver, 6).until(
+                    EC.presence_of_element_located(
+                        (By.CSS_SELECTOR, "div.gallery_photo")
+                    )
                 )
                 prod_name = gallery_element.find_element(By.CLASS_NAME, "prod_name")
                 car_title = prod_name.text
