@@ -264,7 +264,7 @@ def load_cookies(driver):
 
 
 def check_and_handle_alert(driver, retries=3):
-    for attempt in range(retries):
+    for _ in range(retries):
         try:
             # Ждём, пока alert появится, если он есть
             WebDriverWait(driver, 1).until(EC.alert_is_present())
@@ -272,7 +272,7 @@ def check_and_handle_alert(driver, retries=3):
             print(f"Обнаружено всплывающее окно: {alert.text}")
             alert.accept()  # Закрывает alert
             print("Всплывающее окно было закрыто.")
-            time.sleep(2)  # Подождём немного, чтобы убедиться, что алерт не повторится
+            time.sleep(5)  # Подождём немного, чтобы убедиться, что алерт не повторится
         except TimeoutException:
             print("Нет активного всплывающего окна.")
             break
@@ -309,7 +309,7 @@ def get_car_info(url):
         if "reCAPTCHA" in driver.page_source:
             print("Обнаружена reCAPTCHA. Пытаемся решить...")
             driver.refresh()
-            time.sleep(5)
+            time.sleep(3)
             logging.info("Страница обновлена после reCAPTCHA.")
             check_and_handle_alert(driver)  # Повторная проверка
 
