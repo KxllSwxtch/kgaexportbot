@@ -18,7 +18,6 @@ from urllib.parse import urlparse, parse_qs
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from selenium.common.exceptions import NoAlertPresentException
 
 CAPSOLVER_API_KEY = os.getenv("CAPSOLVER_API_KEY")  # Замените на ваш API-ключ CapSolver
 CHROMEDRIVER_PATH = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
@@ -257,7 +256,7 @@ def check_and_handle_alert(driver, retries=3):
             WebDriverWait(driver, 3).until(EC.alert_is_present())
             alert = driver.switch_to.alert
             print(f"Обнаружено всплывающее окно: {alert.text}")
-            alert.close()  # Закрывает alert
+            alert.accept()  # Закрывает alert
             print("Всплывающее окно было закрыто.")
             time.sleep(3)  # Подождём немного, чтобы убедиться, что алерт не повторится
         except TimeoutException:
