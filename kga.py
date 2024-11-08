@@ -263,16 +263,16 @@ def load_cookies(driver):
                 driver.add_cookie(cookie)
 
 
-def check_and_handle_alert(driver, retries=3):
+def check_and_handle_alert(driver, retries=3, wait_time=5):
     for _ in range(retries):
         try:
-            # Ждём, пока alert появится, если он есть
-            WebDriverWait(driver, 1).until(EC.alert_is_present())
+            # Ждём alert до 5 секунд
+            WebDriverWait(driver, wait_time).until(EC.alert_is_present())
             alert = driver.switch_to.alert
             print(f"Обнаружено всплывающее окно: {alert.text}")
             alert.accept()  # Закрывает alert
             print("Всплывающее окно было закрыто.")
-            time.sleep(5)  # Подождём немного, чтобы убедиться, что алерт не повторится
+            time.sleep(2)  # Подождём немного
         except TimeoutException:
             print("Нет активного всплывающего окна.")
             break
