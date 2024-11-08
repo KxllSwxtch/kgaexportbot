@@ -299,6 +299,8 @@ def get_car_info(url):
         check_and_handle_alert(driver, retries=5)
         load_cookies(driver)
 
+        time.sleep(4)
+
         # Проверка на наличие reCAPTCHA
         # if "reCAPTCHA" in driver.page_source:
         #     time.sleep(2)
