@@ -292,7 +292,7 @@ def get_car_info(url):
 
     service = Service(CHROMEDRIVER_PATH)
     driver = webdriver.Chrome(service=service, options=chrome_options)
-    load_cookies()
+    load_cookies(driver)
 
     try:
         driver.get(url)
