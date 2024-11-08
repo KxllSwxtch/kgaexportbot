@@ -1,6 +1,5 @@
 venv/
 kga_backup.py
 profile/
-cookies.pkl
 .env
 bot.log
