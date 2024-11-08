@@ -279,7 +279,7 @@ def get_car_info(url):
 
     chrome_options = Options()
     chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--headless")
+    # chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--window-size=1920,1080")
@@ -297,6 +297,8 @@ def get_car_info(url):
         driver.get(url)
         load_cookies(driver)
         check_and_handle_alert(driver, retries=5)
+        driver.refresh()
+        print("Страница была обновлена")
 
         # Проверка на наличие reCAPTCHA
         # if "reCAPTCHA" in driver.page_source:
