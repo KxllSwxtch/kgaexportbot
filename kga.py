@@ -265,7 +265,7 @@ def check_and_handle_alert(driver, retries=3):
             print(f"Обнаружено всплывающее окно: {alert.text}")
             alert.accept()  # Закрывает alert
             print("Всплывающее окно было закрыто.")
-            time.sleep(6)  # Подождём немного, чтобы убедиться, что алерт не повторится
+            time.sleep(3)  # Подождём немного, чтобы убедиться, что алерт не повторится
         except TimeoutException:
             print("Нет активного всплывающего окна.")
             break
@@ -303,8 +303,8 @@ def get_car_info(url):
             time.sleep(4)
             print("Обнаружена reCAPTCHA. Пытаемся решить...")
             driver.refresh()
-            logging.info("Страница обновлена после reCAPTCHA.")
-            check_and_handle_alert(driver, retries=5)  # Повторная проверка
+            print("Страница обновлена после reCAPTCHA.")
+            check_and_handle_alert(driver)  # Повторная проверка
 
         save_cookies(driver)
         logging.info("Куки сохранены.")
@@ -415,7 +415,18 @@ def calculate_cost(link, message):
             return
 
     # Get car info and new URL
-    result = get_car_info(link)
+    max_retries = 3
+    attempt = 0
+    result = None
+
+    while attempt < max_retries:
+        result = get_car_info(link)
+        if result is not None:
+            break
+        else:
+            attempt += 1
+            print(f"Попытка {attempt} не удалась, пробую снова...")
+            time.sleep(2)  # Wait 2 seconds before retrying
 
     if result is None:
         send_error_message(
@@ -464,14 +475,6 @@ def calculate_cost(link, message):
             if year and engine_volume and price:
                 engine_volume_formatted = f"{format_number(int(engine_volume))} cc"
                 age_formatted = calculate_age(year)
-
-                # total_cost = int(
-                #     json_response.get("result")["price"]["grandTotal"]
-                # ) - int(
-                #     json_response.get("result")["price"]["russian"]["recyclingFee"][
-                #         "rub"
-                #     ]
-                # )
 
                 details = {
                     "car_price_korea": json_response.get("result")["price"]["car"][
