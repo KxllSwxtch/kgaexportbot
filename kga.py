@@ -423,6 +423,7 @@ def calculate_cost(link, message):
 
     # Get car info and new URL
     result = get_car_info(link)
+    time.sleep(5)
 
     if result is None:
         send_error_message(
@@ -471,14 +472,6 @@ def calculate_cost(link, message):
             if year and engine_volume and price:
                 engine_volume_formatted = f"{format_number(int(engine_volume))} cc"
                 age_formatted = calculate_age(year)
-
-                # total_cost = int(
-                #     json_response.get("result")["price"]["grandTotal"]
-                # ) - int(
-                #     json_response.get("result")["price"]["russian"]["recyclingFee"][
-                #         "rub"
-                #     ]
-                # )
 
                 details = {
                     "car_price_korea": json_response.get("result")["price"]["car"][
