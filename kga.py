@@ -293,8 +293,6 @@ def get_car_info(url):
     chrome_options.add_argument("--disable-infobars")
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_argument("--enable-logging")
-    chrome_options.add_argument("--v=1")
     chrome_options.add_argument(
         "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     )
@@ -341,22 +339,13 @@ def get_car_info(url):
 
         # Проверка элемента product_left
         try:
-            product_left = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "product_left"))
-            )
+            product_left = driver.find_element(By.CLASS_NAME, "product_left")
             product_left_splitted = product_left.text.split("\n")
-
             prod_name = product_left.find_element(By.CLASS_NAME, "prod_name")
 
-            car_title = product_left.find_element(
-                By.CLASS_NAME, "prod_name"
-            ).text.strip()
-            car_date = (
-                product_left_splitted[3] if len(product_left_splitted) > 3 else ""
-            )
-            car_engine_capacity = (
-                product_left_splitted[6] if len(product_left_splitted) > 6 else ""
-            )
+            car_title = prod_name.text.strip()
+            car_date = product_left_splitted[3]
+            car_engine_capacity = product_left_splitted[6]
             car_price = re.sub(r"\D", "", product_left_splitted[1])
 
         except NoSuchElementException:
