@@ -268,13 +268,17 @@ def check_and_handle_alert(driver, retries=3):
             break
 
 
-def extract_price_from_keyinfo(driver, car_info):
+def extract_price_from_keyinfo(driver, wait, car_info):
     """Функция для извлечения цены из элемента wrap_keyinfo."""
     try:
-        keyinfo_element = driver.find_element(By.CSS_SELECTOR, "div.wrap_keyinfo")
+        keyinfo_element = wait.until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "div.wrap_keyinfo"))
+        )
         keyinfo_texts = [
             item.text
-            for item in keyinfo_element.find_elements(By.XPATH, ".//*")
+            for item in wait.until(
+                EC.presence_of_all_elements_located((By.XPATH, "div.wrap_keyinfo//*"))
+            )
             if item.text.strip() != ""
         ]
 
@@ -285,15 +289,20 @@ def extract_price_from_keyinfo(driver, car_info):
         print("Элемент wrap_keyinfo не найден.")
 
 
-def extract_info_from_gallery(driver, car_info):
+def extract_info_from_gallery(driver, wait, car_info):
     """Функция для извлечения информации о машине из элемента gallery_photo при отсутствии product_left."""
     try:
-        gallery_element = driver.find_element(By.CSS_SELECTOR, "div.gallery_photo")
+        gallery_element = wait.until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "div.gallery_photo"))
+        )
         car_info["title"] = gallery_element.find_element(
             By.CLASS_NAME, "prod_name"
         ).text
 
-        items = gallery_element.find_elements(By.XPATH, ".//*")
+        items = wait.until(
+            EC.presence_of_all_elements_located((By.XPATH, "div.gallery_photo//*"))
+        )
+
         for index, item in enumerate(items):
             if index == 10:
                 car_info["date"] = item.text
@@ -301,32 +310,42 @@ def extract_info_from_gallery(driver, car_info):
                 car_info["engine_capacity"] = item.text
 
         # Попытка получить цену из элемента wrap_keyinfo
-        extract_price_from_keyinfo(driver, car_info)
+        extract_price_from_keyinfo(driver, wait, car_info)
 
     except NoSuchElementException:
         print("Элемент gallery_photo также не найден.")
 
 
-def parse_product_info(driver):
+def parse_product_info(driver, wait):
     """Функция для извлечения информации о машине из элементов product_left или gallery_photo."""
     car_info = {"title": "", "date": "", "engine_capacity": "", "price": ""}
 
     # Основной блок - проверка и извлечение из product_left
     try:
-        product_left = driver.find_element(By.CLASS_NAME, "product_left")
+        product_left = wait.until(
+            EC.presence_of_element_located((By.CLASS_NAME, "product_left"))
+        )
         product_left_splitted = product_left.text.split("\n")
 
         car_info["title"] = product_left.find_element(
             By.CLASS_NAME, "prod_name"
         ).text.strip()
-        car_info["date"] = product_left_splitted[3]
-        car_info["engine_capacity"] = product_left_splitted[6]
-        car_info["price"] = re.sub(r"\D", "", product_left_splitted[1])
+        car_info["date"] = (
+            product_left_splitted[3] if len(product_left_splitted) > 3 else ""
+        )
+        car_info["engine_capacity"] = (
+            product_left_splitted[6] if len(product_left_splitted) > 6 else ""
+        )
+        car_info["price"] = re.sub(
+            r"\D",
+            "",
+            product_left_splitted[1] if len(product_left_splitted) > 1 else "",
+        )
 
     except NoSuchElementException:
         print("Элемент product_left не найден. Переходим к gallery_photo.")
         # Альтернативный блок - проверка и извлечение из gallery_photo
-        extract_info_from_gallery(driver, car_info)
+        extract_info_from_gallery(driver, wait, car_info)
 
     return car_info
 
@@ -349,6 +368,7 @@ def get_car_info(url):
 
     service = Service(CHROMEDRIVER_PATH)
     driver = webdriver.Chrome(service=service, options=chrome_options)
+    wait = WebDriverWait(driver, 5)
 
     try:
         driver.get(url)
@@ -385,7 +405,7 @@ def get_car_info(url):
             print("Элемент areaLeaseRent не найден.")
 
         # Проверка элемента product_left
-        car_info = parse_product_info(driver)
+        car_info = parse_product_info(driver, wait)
 
         # Проверка и форматирование значений
         formatted_price = (
