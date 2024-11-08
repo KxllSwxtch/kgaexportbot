@@ -235,18 +235,25 @@ def send_error_message(message, error_text):
 #             return None
 
 
-def save_cookies(driver):
-    with open(COOKIES_FILE, "wb") as file:
-        pickle.dump(driver.get_cookies(), file)
+def save_cookies(driver, cookie_file="cookies.pkl"):
+    """Сохраняем cookies в файл."""
+    cookies = driver.get_cookies()  # Получаем все cookies
+    with open(COOKIES_FILE, "wb") as cookie_file_obj:
+        pickle.dump(cookies, cookie_file_obj)
+    print("Куки сохранены.")
 
 
 # Load cookies from file
-def load_cookies(driver):
-    if os.path.exists(COOKIES_FILE):
-        with open(COOKIES_FILE, "rb") as file:
-            cookies = pickle.load(file)
+def load_cookies(driver, cookie_file="cookies.pkl"):
+    """Загружаем cookies из файла."""
+    try:
+        with open(COOKIES_FILE, "rb") as cookie_file_obj:
+            cookies = pickle.load(cookie_file_obj)
             for cookie in cookies:
-                driver.add_cookie(cookie)
+                driver.add_cookie(cookie)  # Добавляем каждый cookie в браузер
+        print("Куки загружены.")
+    except FileNotFoundError:
+        print("Файл с куки не найден.")
 
 
 def check_and_handle_alert(driver, retries=3):
@@ -288,11 +295,13 @@ def get_car_info(url):
 
     try:
         driver.get(url)
+        load_cookies(driver)
         check_and_handle_alert(driver, retries=5)
         load_cookies(driver)
 
         # Проверка на наличие reCAPTCHA
         if "reCAPTCHA" in driver.page_source:
+            time.sleep(2)
             print("Обнаружена reCAPTCHA. Пытаемся решить...")
             driver.refresh()
             logging.info("Страница обновлена после reCAPTCHA.")
