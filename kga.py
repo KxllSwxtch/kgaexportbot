@@ -298,12 +298,6 @@ def get_car_info(url):
         load_cookies(driver)
         check_and_handle_alert(driver, retries=5)
 
-        print(
-            driver.find_element(By.ID, "areaLeaseRent")
-            .find_element(By.CLASS_NAME, "title")
-            .text
-        )
-
         # Проверка на наличие reCAPTCHA
         # if "reCAPTCHA" in driver.page_source:
         #     time.sleep(2)
