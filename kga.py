@@ -18,6 +18,7 @@ from urllib.parse import urlparse, parse_qs
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import NoAlertPresentException
 
 CAPSOLVER_API_KEY = os.getenv("CAPSOLVER_API_KEY")  # Замените на ваш API-ключ CapSolver
 CHROMEDRIVER_PATH = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
@@ -235,37 +236,30 @@ def send_error_message(message, error_text):
 #             return None
 
 
-def save_cookies(driver, cookie_file="cookies.pkl"):
-    """Сохраняем cookies в файл."""
-    cookies = driver.get_cookies()  # Получаем все cookies
-    with open(COOKIES_FILE, "wb") as cookie_file_obj:
-        pickle.dump(cookies, cookie_file_obj)
-    print("Куки сохранены.")
+def save_cookies(driver):
+    with open(COOKIES_FILE, "wb") as file:
+        pickle.dump(driver.get_cookies(), file)
 
 
 # Load cookies from file
-def load_cookies(driver, cookie_file="cookies.pkl"):
-    """Загружаем cookies из файла."""
-    try:
-        with open(COOKIES_FILE, "rb") as cookie_file_obj:
-            cookies = pickle.load(cookie_file_obj)
+def load_cookies(driver):
+    if os.path.exists(COOKIES_FILE):
+        with open(COOKIES_FILE, "rb") as file:
+            cookies = pickle.load(file)
             for cookie in cookies:
-                driver.add_cookie(cookie)  # Добавляем каждый cookie в браузер
-        print("Куки загружены.")
-    except FileNotFoundError:
-        print("Файл с куки не найден.")
+                driver.add_cookie(cookie)
 
 
 def check_and_handle_alert(driver, retries=3):
-    for _ in range(retries):
+    for attempt in range(retries):
         try:
             # Ждём, пока alert появится, если он есть
-            WebDriverWait(driver, 3).until(EC.alert_is_present())
+            WebDriverWait(driver, 1).until(EC.alert_is_present())
             alert = driver.switch_to.alert
             print(f"Обнаружено всплывающее окно: {alert.text}")
             alert.accept()  # Закрывает alert
             print("Всплывающее окно было закрыто.")
-            time.sleep(3)  # Подождём немного, чтобы убедиться, что алерт не повторится
+            time.sleep(2)  # Подождём немного, чтобы убедиться, что алерт не повторится
         except TimeoutException:
             print("Нет активного всплывающего окна.")
             break
@@ -295,15 +289,14 @@ def get_car_info(url):
 
     try:
         driver.get(url)
-        load_cookies(driver)
         check_and_handle_alert(driver, retries=5)
+        load_cookies(driver)
 
         # Проверка на наличие reCAPTCHA
         if "reCAPTCHA" in driver.page_source:
-            time.sleep(4)
             print("Обнаружена reCAPTCHA. Пытаемся решить...")
             driver.refresh()
-            print("Страница обновлена после reCAPTCHA.")
+            logging.info("Страница обновлена после reCAPTCHA.")
             check_and_handle_alert(driver)  # Повторная проверка
 
         save_cookies(driver)
@@ -415,18 +408,7 @@ def calculate_cost(link, message):
             return
 
     # Get car info and new URL
-    max_retries = 3
-    attempt = 0
-    result = None
-
-    while attempt < max_retries:
-        result = get_car_info(link)
-        if result is not None:
-            break
-        else:
-            attempt += 1
-            print(f"Попытка {attempt} не удалась, пробую снова...")
-            time.sleep(2)  # Wait 2 seconds before retrying
+    result = get_car_info(link)
 
     if result is None:
         send_error_message(
@@ -475,6 +457,14 @@ def calculate_cost(link, message):
             if year and engine_volume and price:
                 engine_volume_formatted = f"{format_number(int(engine_volume))} cc"
                 age_formatted = calculate_age(year)
+
+                # total_cost = int(
+                #     json_response.get("result")["price"]["grandTotal"]
+                # ) - int(
+                #     json_response.get("result")["price"]["russian"]["recyclingFee"][
+                #         "rub"
+                #     ]
+                # )
 
                 details = {
                     "car_price_korea": json_response.get("result")["price"]["car"][
