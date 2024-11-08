@@ -258,7 +258,7 @@ def check_and_handle_alert(driver, retries=3):
             print(f"Обнаружено всплывающее окно: {alert.text}")
             alert.accept()  # Закрывает alert
             print("Всплывающее окно было закрыто.")
-            time.sleep(3)  # Подождём немного, чтобы убедиться, что алерт не повторится
+            time.sleep(6)  # Подождём немного, чтобы убедиться, что алерт не повторится
         except TimeoutException:
             print("Нет активного всплывающего окна.")
             break
