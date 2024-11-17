@@ -616,8 +616,7 @@ def get_insurance_total():
         driver = webdriver.Chrome(service=service, options=chrome_options)
         driver.get(url)
 
-        print(driver.page_source)
-        print(car_id_external)
+        print("car_id_external: ", car_id_external)
 
         try:
             smlist_element = WebDriverWait(driver, 7).until(
