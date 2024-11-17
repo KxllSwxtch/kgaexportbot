@@ -218,37 +218,6 @@ def send_error_message(message, error_text):
     logging.error(f"Error sent to user {message.chat.id}: {error_text}")
 
 
-# def solve_recaptcha_v3():
-#     payload = {
-#         "clientKey": CAPSOLVER_API_KEY,
-#         "task": {
-#             "type": "ReCaptchaV3TaskProxyLess",
-#             "websiteKey": SITE_KEY,
-#             "websiteURL": "http://www.encar.com:80",
-#             "pageAction": "/dc/dc_cardetailview_do",
-#         },
-#     }
-#     res = requests.post("https://api.capsolver.com/createTask", json=payload)
-#     resp = res.json()
-#     task_id = resp.get("taskId")
-#     if not task_id:
-#         print("Не удалось создать задачу:", res.text)
-#         return None
-#     print(f"Получен taskId: {task_id} / Ожидание результата...")
-
-#     while True:
-#         time.sleep(1)
-#         payload = {"clientKey": CAPSOLVER_API_KEY, "taskId": task_id}
-#         res = requests.post("https://api.capsolver.com/getTaskResult", json=payload)
-#         resp = res.json()
-#         if resp.get("status") == "ready":
-#             print("reCAPTCHA успешно решена")
-#             return resp.get("solution", {}).get("gRecaptchaResponse")
-#         if resp.get("status") == "failed" or resp.get("errorId"):
-#             print("Решение не удалось! Ответ:", res.text)
-#             return None
-
-
 def save_cookies(driver):
     with open(COOKIES_FILE, "wb") as file:
         pickle.dump(driver.get_cookies(), file)
@@ -615,23 +584,26 @@ def calculate_cost(link, message):
 
 # Function to get insurance total
 def get_insurance_total():
+    global car_id_external
+
     print("\n\n####################")
     print("[ЗАПРОС] ТЕХНИЧЕСКИЙ ОТЧËТ ОБ АВТОМОБИЛЕ")
     print("####################\n\n")
-
-    global car_id_external
 
     # Настройка WebDriver с нужными опциями
     chrome_options = Options()
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--window-size=1920,1080")
+    chrome_options.add_argument("--no-sandbox")  # Необходим для работы в Heroku
+    chrome_options.add_argument("--disable-dev-shm-usage")  # Решает проблемы с памятью
+    chrome_options.add_argument("--window-size=1920,1080")  # Устанавливает размер окна
+    chrome_options.add_argument("--disable-infobars")
+    chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_argument("--remote-debugging-port=9222")
+    chrome_options.add_argument("--enable-logging")
+    chrome_options.add_argument("--v=1")  # Уровень логирования
     chrome_options.add_argument(
-        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     )
 
     service = Service(CHROMEDRIVER_PATH)
@@ -644,10 +616,13 @@ def get_insurance_total():
         driver = webdriver.Chrome(service=service, options=chrome_options)
         driver.get(url)
 
-        # Пробуем найти элемент 'smlist' без явного ожидания
-        time.sleep(2)
+        print(driver.page_source)
+        print(car_id_external)
+
         try:
-            smlist_element = driver.find_element(By.CLASS_NAME, "smlist")
+            smlist_element = WebDriverWait(driver, 7).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "smlist"))
+            )
         except NoSuchElementException:
             print("Элемент 'smlist' не найден.")
             return ["Нет данных", "Нет данных"]
@@ -896,6 +871,36 @@ if __name__ == "__main__":
     get_currency_rates()
     set_bot_commands()
     bot.polling(none_stop=True)
+
+# def solve_recaptcha_v3():
+#     payload = {
+#         "clientKey": CAPSOLVER_API_KEY,
+#         "task": {
+#             "type": "ReCaptchaV3TaskProxyLess",
+#             "websiteKey": SITE_KEY,
+#             "websiteURL": "http://www.encar.com:80",
+#             "pageAction": "/dc/dc_cardetailview_do",
+#         },
+#     }
+#     res = requests.post("https://api.capsolver.com/createTask", json=payload)
+#     resp = res.json()
+#     task_id = resp.get("taskId")
+#     if not task_id:
+#         print("Не удалось создать задачу:", res.text)
+#         return None
+#     print(f"Получен taskId: {task_id} / Ожидание результата...")
+
+#     while True:
+#         time.sleep(1)
+#         payload = {"clientKey": CAPSOLVER_API_KEY, "taskId": task_id}
+#         res = requests.post("https://api.capsolver.com/getTaskResult", json=payload)
+#         resp = res.json()
+#         if resp.get("status") == "ready":
+#             print("reCAPTCHA успешно решена")
+#             return resp.get("solution", {}).get("gRecaptchaResponse")
+#         if resp.get("status") == "failed" or resp.get("errorId"):
+#             print("Решение не удалось! Ответ:", res.text)
+#             return None
 
 
 # UNUSED CODE
