@@ -239,6 +239,7 @@ def check_and_handle_alert(driver):
         print(f"Обнаружено всплывающее окно: {alert.text}")
         alert.accept()  # Закрывает alert
         print("Всплывающее окно было закрыто.")
+        driver.refresh()
     except TimeoutException:
         print("Нет активного всплывающего окна.")
     except Exception as alert_exception:
@@ -274,11 +275,11 @@ def get_car_info(url):
         load_cookies(driver)
 
         # Проверка на reCAPTCHA
-        if "reCAPTCHA" in driver.page_source:
-            logging.info("Обнаружена reCAPTCHA. Пытаемся решить...")
-            driver.refresh()
-            logging.info("Страница обновлена после reCAPTCHA.")
-            check_and_handle_alert(driver)  # Перепроверка после обновления страницы
+        # if "reCAPTCHA" in driver.page_source:
+        #     logging.info("Обнаружена reCAPTCHA. Пытаемся решить...")
+        #     driver.refresh()
+        #     logging.info("Страница обновлена после reCAPTCHA.")
+        #     check_and_handle_alert(driver)  # Перепроверка после обновления страницы
 
         save_cookies(driver)
         logging.info("Куки сохранены.")
@@ -441,7 +442,6 @@ def calculate_cost(link, message):
 
     # Get car info and new URL
     result = get_car_info(link)
-    time.sleep(5)
 
     if result is None:
         send_error_message(
