@@ -287,6 +287,7 @@ def get_car_info(url):
         parsed_url = urlparse(url)
         query_params = parse_qs(parsed_url.query)
         car_id = query_params.get("carid", [None])[0]
+        car_id_external = car_id
 
         # Проверка элемента areaLeaseRent
         try:
