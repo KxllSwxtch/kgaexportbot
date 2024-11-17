@@ -239,7 +239,6 @@ def check_and_handle_alert(driver):
         print(f"Обнаружено всплывающее окно: {alert.text}")
         alert.accept()  # Закрывает alert
         print("Всплывающее окно было закрыто.")
-        driver.refresh()
     except TimeoutException:
         print("Нет активного всплывающего окна.")
     except Exception as alert_exception:
@@ -273,6 +272,7 @@ def get_car_info(url):
         driver.get(url)
         check_and_handle_alert(driver)  # Обработка alert, если присутствует
         load_cookies(driver)
+        driver.refresh()
 
         # Проверка на reCAPTCHA
         # if "reCAPTCHA" in driver.page_source:
