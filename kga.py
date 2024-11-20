@@ -309,7 +309,9 @@ def get_car_info(url):
 
         # Проверка элемента product_left
         try:
-            product_left = driver.find_element(By.CLASS_NAME, "product_left")
+            product_left = WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "product_left"))
+            )
             product_left_splitted = product_left.text.split("\n")
 
             car_title = product_left.find_element(
