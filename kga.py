@@ -441,6 +441,7 @@ def calculate_cost(link, message):
 
     # Get car info and new URL
     result = get_car_info(link)
+    time.sleep(3)
 
     if result is None:
         send_error_message(
