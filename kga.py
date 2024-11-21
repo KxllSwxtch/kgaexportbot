@@ -348,7 +348,7 @@ def get_car_info(url):
 
         # Проверка элемента gallery_photo
         try:
-            gallery_element = WebDriverWait(driver, 5).until(
+            gallery_element = WebDriverWait(driver, 7).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "div.gallery_photo"))
             )
             car_title = gallery_element.find_element(By.CLASS_NAME, "prod_name").text
@@ -408,7 +408,6 @@ def get_car_info(url):
     finally:
         # Обработка всплывающих окон (alerts)
         try:
-            WebDriverWait(driver, 3).until(EC.alert_is_present())
             alert = driver.switch_to.alert
             alert.dismiss()
             logging.info("Всплывающее окно отклонено.")
