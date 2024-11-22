@@ -272,7 +272,6 @@ def get_car_info(url):
         driver.get(url)
         check_and_handle_alert(driver)
         load_cookies(driver)
-        time.sleep(4)
 
         # Проверка на reCAPTCHA
         if "reCAPTCHA" in driver.page_source:
@@ -309,7 +308,8 @@ def get_car_info(url):
 
         # Проверка элемента product_left
         try:
-            product_left = WebDriverWait(driver, 10).until(
+            time.sleep(3)
+            product_left = WebDriverWait(driver, 6).until(
                 EC.presence_of_element_located((By.CLASS_NAME, "product_left"))
             )
             product_left_splitted = product_left.text.split("\n")
@@ -349,7 +349,10 @@ def get_car_info(url):
 
         # Проверка элемента gallery_photo
         try:
-            gallery_element = driver.find_element(By.CSS_SELECTOR, "div.gallery_photo")
+            time.sleep(3)
+            gallery_element = WebDriverWait(driver, 6).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "div.gallery_photo"))
+            )
             car_title = gallery_element.find_element(By.CLASS_NAME, "prod_name").text
             items = gallery_element.find_elements(By.XPATH, ".//*")
 
