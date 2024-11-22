@@ -250,7 +250,7 @@ def get_car_info(url):
 
     chrome_options = Options()
     chrome_options.add_argument("--disable-gpu")
-    # chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")  # Необходим для работы в Heroku
     chrome_options.add_argument("--disable-dev-shm-usage")  # Решает проблемы с памятью
     chrome_options.add_argument("--window-size=1920,1080")  # Устанавливает размер окна
@@ -272,6 +272,7 @@ def get_car_info(url):
         driver.get(url)
         check_and_handle_alert(driver)
         load_cookies(driver)
+        time.sleep(4)
 
         # Проверка на reCAPTCHA
         if "reCAPTCHA" in driver.page_source:
