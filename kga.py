@@ -234,7 +234,7 @@ def load_cookies(driver):
 
 def check_and_handle_alert(driver):
     try:
-        WebDriverWait(driver, 3).until(EC.alert_is_present())
+        WebDriverWait(driver, 5).until(EC.alert_is_present())
         alert = driver.switch_to.alert
         print(f"Обнаружено всплывающее окно: {alert.text}")
         alert.accept()  # Закрывает alert
@@ -250,7 +250,7 @@ def get_car_info(url):
 
     chrome_options = Options()
     chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--headless")
+    # chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")  # Необходим для работы в Heroku
     chrome_options.add_argument("--disable-dev-shm-usage")  # Решает проблемы с памятью
     chrome_options.add_argument("--window-size=1920,1080")  # Устанавливает размер окна
