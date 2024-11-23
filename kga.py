@@ -270,9 +270,9 @@ def get_car_info(url):
     try:
         # Загружаем страницу
         driver.get(url)
-        time.sleep(5)
         check_and_handle_alert(driver)
         load_cookies(driver)
+        time.sleep(4)
 
         # Проверка на reCAPTCHA
         if "reCAPTCHA" in driver.page_source:
@@ -440,6 +440,7 @@ def calculate_cost(link, message):
 
     # Get car info and new URL
     result = get_car_info(link)
+    time.sleep(4)
 
     if result is None:
         send_error_message(
