@@ -308,8 +308,7 @@ def get_car_info(url):
 
         # Проверка элемента product_left
         try:
-            time.sleep(3)
-            product_left = WebDriverWait(driver, 6).until(
+            product_left = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.CLASS_NAME, "product_left"))
             )
             product_left_splitted = product_left.text.split("\n")
@@ -349,7 +348,6 @@ def get_car_info(url):
 
         # Проверка элемента gallery_photo
         try:
-            time.sleep(3)
             gallery_element = WebDriverWait(driver, 6).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "div.gallery_photo"))
             )
