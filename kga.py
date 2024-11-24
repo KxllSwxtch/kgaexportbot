@@ -277,7 +277,6 @@ def get_car_info(url):
         if "reCAPTCHA" in driver.page_source:
             logging.info("Обнаружена reCAPTCHA. Пытаемся решить...")
             driver.refresh()
-            time.sleep(4)
             logging.info("Страница обновлена после reCAPTCHA.")
             check_and_handle_alert(driver)  # Перепроверка после обновления страницы
 
@@ -309,7 +308,9 @@ def get_car_info(url):
 
         # Проверка элемента product_left
         try:
-            product_left = driver.find_element(By.CLASS_NAME, "product_left")
+            product_left = WebDriverWait(driver, 7).until(
+                EC.visibility_of_element_located((By.CLASS_NAME, "product_left"))
+            )
             product_left_splitted = product_left.text.split("\n")
 
             car_title = product_left.find_element(
