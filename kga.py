@@ -24,7 +24,7 @@ from selenium.common.exceptions import NoAlertPresentException
 
 CAPSOLVER_API_KEY = os.getenv("CAPSOLVER_API_KEY")  # Замените на ваш API-ключ CapSolver
 CHROMEDRIVER_PATH = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
-# CHROMEDRIVER_PATH = "/usd/local/bin/chromedriver"
+# CHROMEDRIVER_PATH = "/opt/homebrew/bin/chromedriver"
 COOKIES_FILE = "cookies.pkl"
 CHANNEL_USERNAME = "@kga_korea"
 
@@ -39,7 +39,6 @@ proxy = {
     "https": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
 }
 
-apihelper.proxy = proxy
 
 session = requests.Session()
 
@@ -106,7 +105,7 @@ def get_currency_rates():
     global usd_rate
 
     url = "https://www.cbr-xml-daily.ru/daily_json.js"
-    response = requests.get(url, verify=False)
+    response = requests.get(url)
     data = response.json()
 
     # Получаем курсы валют
@@ -272,7 +271,6 @@ def get_car_info(url):
     chrome_options.add_argument("--disable-infobars")
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_argument(f"--proxy-server={proxy['https']}")
     chrome_options.add_argument("--enable-logging")
     chrome_options.add_argument("--v=1")  # Уровень логирования
     chrome_options.add_argument(
@@ -286,7 +284,6 @@ def get_car_info(url):
     try:
         # Загружаем страницу
         driver.get(url)
-        print(driver.page_source)
         check_and_handle_alert(driver)
         load_cookies(driver)
 
@@ -307,51 +304,117 @@ def get_car_info(url):
         car_id = query_params.get("carid", [None])[0]
         car_id_external = car_id
 
+        # Проверка элемента areaLeaseRent
+        try:
+            print("Поиск areaLeaseRent")
+            lease_area = driver.find_element(By.ID, "areaLeaseRent")
+            title_element = lease_area.find_element(By.CLASS_NAME, "title")
+
+            if "리스정보" in title_element.text or "렌트정보" in title_element.text:
+                logging.info("Данная машина находится в лизинге.")
+                return [
+                    "",
+                    "Данная машина находится в лизинге. Свяжитесь с менеджером.",
+                ]
+        except NoSuchElementException:
+            logging.warning("Элемент areaLeaseRent не найден.")
+
         # Инициализация переменных
-        (
-            car_title,
-            car_date,
-            car_engine_capacity,
-            car_price,
-            car_make,
-            car_model,
-            car_year,
-        ) = ("", "", "", "", "", "", "")
+        car_title, car_date, car_engine_capacity, car_price = "", "", "", ""
 
-        # Извлекаем все мета-теги
-        meta_tags = driver.find_elements_by_tag_name("meta")
+        # Проверка элемента product_left
+        try:
+            print("Поиск product_left")
+            product_left = driver.find_element(By.CLASS_NAME, "product_left")
+            product_left_splitted = product_left.text.split("\n")
 
-        print(meta_tags)
+            car_title = product_left.find_element(
+                By.CLASS_NAME, "prod_name"
+            ).text.strip()
 
-        # Перебираем мета-теги и извлекаем данные
-        for tag in meta_tags:
-            name = tag.get_attribute("name")
-            content = tag.get_attribute("content")
+            car_date = (
+                product_left_splitted[3] if len(product_left_splitted) > 3 else ""
+            )
+            car_engine_capacity = (
+                product_left_splitted[6] if len(product_left_splitted) > 6 else ""
+            )
+            car_price = re.sub(r"\D", "", product_left_splitted[1])
 
-            if name == "WT.z_model_name":
-                car_title = content.strip()
-            elif name == "WT.z_make":
-                car_make = content.strip()
-            elif name == "WT.z_model_trim":
-                car_model = content.strip()
-            elif name == "WT.z_year":
-                car_year = content.strip()
-            elif name == "WT.z_price":
-                car_price = content.strip()
-            elif name == "WT.mileage":
-                car_engine_capacity = content.strip()
+            # Форматирование
+            formatted_price = car_price.replace(",", "")
+            formatted_engine_capacity = (
+                car_engine_capacity.replace(",", "")[:-2]
+                if car_engine_capacity
+                else "0"
+            )
+            cleaned_date = "".join(filter(str.isdigit, car_date))
+            formatted_date = (
+                f"01{cleaned_date[2:4]}{cleaned_date[:2]}" if cleaned_date else "010101"
+            )
+
+            # Создание URL
+            new_url = f"https://plugin-back-versusm.amvera.io/car-ab-korea/{car_id}?price={formatted_price}&date={formatted_date}&volume={formatted_engine_capacity}"
+            logging.info(f"Данные о машине получены: {new_url}, {car_title}")
+            return [new_url, car_title]
+        except NoSuchElementException as e:
+            logging.error(f"Ошибка при обработке product_left: {e}")
+        except Exception as e:
+            logging.error(f"Неизвестная ошибка при обработке product_left: {e}")
+
+        # Проверка элемента gallery_photo
+        try:
+            print("Поиск gallery_photo")
+            gallery_element = WebDriverWait(driver, 7).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "div.gallery_photo"))
+            )
+            car_title = gallery_element.find_element(By.CLASS_NAME, "prod_name").text
+            items = gallery_element.find_elements(By.XPATH, ".//*")
+
+            if len(items) > 10:
+                car_date = items[10].text
+            if len(items) > 18:
+                car_engine_capacity = items[18].text
+
+            # Извлечение информации о ключах
+            try:
+                keyinfo_element = driver.find_element(
+                    By.CSS_SELECTOR, "div.wrap_keyinfo"
+                )
+                keyinfo_items = keyinfo_element.find_elements(By.XPATH, ".//*")
+                keyinfo_texts = [
+                    item.text for item in keyinfo_items if item.text.strip()
+                ]
+
+                # Извлекаем цену, если элемент существует
+                car_price = (
+                    re.sub(r"\D", "", keyinfo_texts[12])
+                    if len(keyinfo_texts) > 12
+                    else None
+                )
+            except NoSuchElementException:
+                logging.warning("Элемент wrap_keyinfo не найден.")
+
+        except NoSuchElementException:
+            logging.warning("Элемент gallery_photo также не найден.")
 
         # Форматирование значений для URL
-        formatted_price = re.sub(r"\D", "", car_price) if car_price else "0"
+        if car_price:
+            formatted_price = car_price.replace(",", "")
+        else:
+            formatted_price = "0"  # Задаем значение по умолчанию
+
         formatted_engine_capacity = (
             car_engine_capacity.replace(",", "")[:-2] if car_engine_capacity else "0"
         )
-        formatted_year = car_year if car_year else "0101"
+        cleaned_date = "".join(filter(str.isdigit, car_date))
+        formatted_date = (
+            f"01{cleaned_date[2:4]}{cleaned_date[:2]}" if cleaned_date else "010101"
+        )
 
-        # Создание нового URL с извлеченными данными
-        new_url = f"https://plugin-back-versusm.amvera.io/car-ab-korea/{car_id}?price={formatted_price}&date={formatted_year}&volume={formatted_engine_capacity}"
+        # Конечный URL
+        new_url = f"https://plugin-back-versusm.amvera.io/car-ab-korea/{car_id}?price={formatted_price}&date={formatted_date}&volume={formatted_engine_capacity}"
+
         logging.info(f"Данные о машине получены: {new_url}, {car_title}")
-
         return [new_url, car_title]
 
     except Exception as e:
@@ -382,6 +445,10 @@ def calculate_cost(link, message):
 
     bot.send_message(message.chat.id, "Данные переданы в обработку ⏳")
 
+    parsed_url = urlparse(link)
+    query_params = parse_qs(parsed_url.query)
+    car_id = query_params.get("carid", [None])[0]
+
     # Check if the link is from the mobile version
     if "fem.encar.com" in link:
         # Extract all digits from the mobile link
@@ -389,11 +456,12 @@ def calculate_cost(link, message):
         if car_id_match:
             car_id = car_id_match[0]  # Use the first match of digits
             # Create the new URL
-            link = f"http://www.encar.com/dc/dc_cardetailview.do?pageid=fc_carsearch&listAdvType=word&carid={car_id}&view_type=hs_ad&wtClick_forList=017&advClickPosition=imp_word_p1_g4"
+            link = f"http://www.encar.com/dc/dc_cardetailview.do?carid={car_id}"
         else:
             send_error_message(message, "🚫 Не удалось извлечь carid из ссылки.")
             return
 
+    link = f"http://www.encar.com/dc/dc_cardetailview.do?carid={car_id}"
     # Get car info and new URL
     result = get_car_info(link)
     time.sleep(3)
