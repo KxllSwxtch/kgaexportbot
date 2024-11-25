@@ -293,8 +293,8 @@ def get_car_info(url):
         # Проверка элемента areaLeaseRent
         try:
             print("Поиск areaLeaseRent")
-            lease_area = WebDriverWait(driver, 5).until(
-                EC.visibility_of_element_located((By.ID, "areaLeaseRent"))
+            lease_area = WebDriverWait(driver, 6).until(
+                EC.presence_of_element_located((By.ID, "areaLeaseRent"))
             )
             title_element = lease_area.find_element(By.CLASS_NAME, "title")
 
@@ -314,7 +314,7 @@ def get_car_info(url):
         try:
             print("Поиск product_left")
             product_left = WebDriverWait(driver, 7).until(
-                EC.visibility_of_element_located((By.CLASS_NAME, "product_left"))
+                EC.presence_of_element_located((By.CLASS_NAME, "product_left"))
             )
             product_left_splitted = product_left.text.split("\n")
 
@@ -355,7 +355,7 @@ def get_car_info(url):
         try:
             print("Поиск gallery_photo")
             gallery_element = WebDriverWait(driver, 7).until(
-                EC.visibility_of_element_located((By.CSS_SELECTOR, "div.gallery_photo"))
+                EC.presence_of_element_located((By.CSS_SELECTOR, "div.gallery_photo"))
             )
             car_title = gallery_element.find_element(By.CLASS_NAME, "prod_name").text
             items = gallery_element.find_elements(By.XPATH, ".//*")
