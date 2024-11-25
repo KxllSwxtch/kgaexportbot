@@ -329,6 +329,8 @@ def get_car_info(url):
             # Возвращаемся к основному контексту страницы
             driver.switch_to.default_content()
 
+            print(driver.page_source)
+
             # Вставляем токен в textarea
             captcha_response = driver.find_element(
                 By.CSS_SELECTOR, ".g-recaptcha-response"
