@@ -349,6 +349,8 @@ def get_car_info(url):
 
             # Теперь можно продолжать парсинг данных о машине
             car_info = driver.page_source
+
+            print(car_info)
             print("Информация о машине успешно получена!")
 
         # Парсим URL для получения carid
