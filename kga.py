@@ -301,7 +301,7 @@ def get_car_info(url):
 
     try:
         driver.get("http://encar.com")
-        time.sleep(2)
+        time.sleep(4)
 
         # Загружаем страницу
         driver.get(url)
