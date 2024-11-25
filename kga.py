@@ -8,7 +8,6 @@ import locale
 import datetime
 import logging
 
-from telebot import apihelper
 from telebot import types
 from dotenv import load_dotenv
 from selenium import webdriver
@@ -259,6 +258,16 @@ def check_and_handle_alert(driver):
         print(f"Ошибка при обработке alert: {alert_exception}")
 
 
+def get_ip():
+    response = requests.get("https://api.ipify.org?format=json")
+    ip = response.json()["ip"]
+    print(f"Current IP address: {ip}")
+    return ip
+
+
+print(get_ip())
+
+
 def get_car_info(url):
     global car_id_external
 
@@ -291,7 +300,7 @@ def get_car_info(url):
         if "reCAPTCHA" in driver.page_source:
             print("Обнаружена reCAPTCHA. Пытаемся решить...")
             driver.refresh()
-            time.sleep(5)
+            time.sleep(10)
             print("Страница обновлена после reCAPTCHA.")
             check_and_handle_alert(driver)  # Перепроверка после обновления страницы
 
