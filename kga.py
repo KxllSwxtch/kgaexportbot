@@ -106,7 +106,7 @@ def get_currency_rates():
     global usd_rate
 
     url = "https://www.cbr-xml-daily.ru/daily_json.js"
-    response = requests.get(url, proxies=proxy, verify=False)
+    response = requests.get(url, verify=False)
     data = response.json()
 
     # Получаем курсы валют
@@ -272,7 +272,7 @@ def get_car_info(url):
     chrome_options.add_argument("--disable-infobars")
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    # chrome_options.add_argument(f"--proxy-server={proxy['https']}")
+    chrome_options.add_argument(f"--proxy-server={proxy['https']}")
     chrome_options.add_argument("--enable-logging")
     chrome_options.add_argument("--v=1")  # Уровень логирования
     chrome_options.add_argument(
@@ -286,16 +286,17 @@ def get_car_info(url):
     try:
         # Загружаем страницу
         driver.get(url)
-        # check_and_handle_alert(driver)
+        print(driver.page_source)
+        check_and_handle_alert(driver)
         load_cookies(driver)
 
         # Проверка на reCAPTCHA
-        # if "reCAPTCHA" in driver.page_source:
-        #     print("Обнаружена reCAPTCHA. Пытаемся решить...")
-        #     driver.refresh()
-        #     time.sleep(5)
-        #     print("Страница обновлена после reCAPTCHA.")
-        #     check_and_handle_alert(driver)  # Перепроверка после обновления страницы
+        if "reCAPTCHA" in driver.page_source:
+            print("Обнаружена reCAPTCHA. Пытаемся решить...")
+            driver.refresh()
+            time.sleep(5)
+            print("Страница обновлена после reCAPTCHA.")
+            check_and_handle_alert(driver)  # Перепроверка после обновления страницы
 
         save_cookies(driver)
         logging.info("Куки сохранены.")
