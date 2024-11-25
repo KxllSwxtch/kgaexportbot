@@ -36,7 +36,6 @@ PROXY_PASS = "GBno0x"
 
 proxy = {
     "http": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
-    "https": f"https://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
 }
 
 apihelper.proxy = proxy
