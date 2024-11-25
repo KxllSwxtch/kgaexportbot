@@ -283,12 +283,13 @@ def get_car_info(url):
         time.sleep(5)
         load_cookies(driver)
 
+        print(driver.page_source)
+
         # Проверка на reCAPTCHA
         if "reCAPTCHA" in driver.page_source:
             print("Обнаружена reCAPTCHA. Пытаемся решить...")
             driver.refresh()
             time.sleep(5)
-            print(driver.page_source)
             print("Страница обновлена после reCAPTCHA.")
             check_and_handle_alert(driver)  # Перепроверка после обновления страницы
 
@@ -888,7 +889,7 @@ def format_number(number):
 
 # Run the bot
 if __name__ == "__main__":
-    get_currency_rates()
+    # get_currency_rates()
     set_bot_commands()
     bot.polling(none_stop=True)
 
