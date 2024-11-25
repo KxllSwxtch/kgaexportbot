@@ -326,23 +326,21 @@ def get_car_info(url):
             token = result["code"]
             print(f"Получен токен: {token}")
 
-            time.sleep(2)
-
-            # Переключаемся на iframe для взаимодействия
-            driver.switch_to.frame(iframe)
-
-            # Вставляем токен в поле g-recaptcha-response
-            checkbox = driver.find_element(By.ID, "recaptcha-anchor")
-            checkbox.click()
-            # driver.execute_script(f"arguments[0].value = '{token}'", captcha_response)
-
             # Возвращаемся к основному контексту страницы
             driver.switch_to.default_content()
 
-            print(driver.page_source)
+            # Вставляем токен в textarea
+            captcha_response = driver.find_element(
+                By.CSS_SELECTOR, ".g-recaptcha-response"
+            )
+            driver.execute_script(
+                f"arguments[0].style.display = 'block';", captcha_response
+            )
+            driver.execute_script(f"arguments[0].value = '{token}';", captcha_response)
+            print("Токен вставлен в g-recaptcha-response.")
 
             # Отправляем форму
-            form = driver.find_element(By.TAG_NAME, "form")
+            form = driver.find_element(By.CSS_SELECTOR, "form.cont_main_captcha")
             form.submit()
             print("Форма отправлена!")
 
