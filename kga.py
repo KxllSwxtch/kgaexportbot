@@ -442,7 +442,7 @@ def calculate_cost(link, message):
         if car_id_match:
             car_id = car_id_match[0]  # Use the first match of digits
             # Create the new URL
-            link = f"http://www.encar.com/dc/dc_cardetailview.do?carid={car_id}"
+            link = f"http://www.encar.com/dc/dc_cardetailview.do?pageid=fc_carsearch&listAdvType=word&carid={car_id}&view_type=hs_ad&wtClick_forList=017&advClickPosition=imp_word_p1_g4"
         else:
             send_error_message(message, "🚫 Не удалось извлечь carid из ссылки.")
             return
