@@ -307,53 +307,63 @@ def get_car_info(url):
         if "reCAPTCHA" in driver.page_source:
             print("Обнаружена reCAPTCHA. Пытаемся решить...")
 
-            # Ищем iframe с reCAPTCHA
+            # Поиск iframe с reCAPTCHA
             iframe = driver.find_element(By.CSS_SELECTOR, "iframe[src*='recaptcha']")
             iframe_src = iframe.get_attribute("src")
             print(f"Iframe src: {iframe_src}")
 
-            # Извлекаем sitekey из параметра 'k' в URL
+            # Извлечение sitekey из параметра 'k' в URL iframe
             match = re.search(r"[?&]k=([^&]+)", iframe_src)
             if not match:
                 print("Sitekey не найден в iframe URL.")
                 driver.quit()
-                return
+                exit()
+
             sitekey = match.group(1)
             print(f"Sitekey: {sitekey}")
 
-            # Решаем reCAPTCHA через 2Captcha
-            result = solver.recaptcha(sitekey=sitekey, url=url, version="v2")
-            token = result["code"]
-            print(f"Получен токен: {token}")
+            # Решение reCAPTCHA через 2Captcha
+            try:
+                result = solver.recaptcha(
+                    sitekey=sitekey, url=driver.current_url, version="v2"
+                )
+                token = result["code"]
+                print("Токен reCAPTCHA успешно получен.")
+            except Exception as e:
+                print(f"Ошибка при решении reCAPTCHA: {e}")
+                driver.quit()
+                exit()
 
-            # Возвращаемся к основному контексту страницы
+            # Возврат в основной контекст страницы
             driver.switch_to.default_content()
 
-            # Вставляем токен в textarea
+            # Вставка токена в textarea элемента g-recaptcha-response
             captcha_response = driver.find_element(
                 By.CSS_SELECTOR, ".g-recaptcha-response"
             )
             driver.execute_script(
-                f"arguments[0].style.display = 'block';", captcha_response
+                "arguments[0].style.display = 'block';", captcha_response
             )
             driver.execute_script(f"arguments[0].value = '{token}';", captcha_response)
             print("Токен вставлен в g-recaptcha-response.")
 
-            print(driver.page_source)
+            # Отправка формы
+            try:
+                form = driver.find_element(By.CSS_SELECTOR, "form.cont_main_captcha")
+                form.submit()
+                print("Форма успешно отправлена.")
+            except Exception as e:
+                print(f"Ошибка при отправке формы: {e}")
+                driver.quit()
+                exit()
 
-            # Отправляем форму
-            form = driver.find_element(By.CSS_SELECTOR, "form.cont_main_captcha")
-            form.submit()
-            print("Форма отправлена!")
-
-            # Ждем, пока страница перезагрузится
+            # Ожидание завершения процесса и обновления страницы
             time.sleep(5)
 
-            # Теперь можно продолжать парсинг данных о машине
+            # Получение страницы с информацией о машине
             car_info = driver.page_source
-
-            print(car_info)
             print("Информация о машине успешно получена!")
+            print(car_info)
 
         # Парсим URL для получения carid
         parsed_url = urlparse(url)
