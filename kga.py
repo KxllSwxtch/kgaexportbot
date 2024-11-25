@@ -100,7 +100,7 @@ def get_currency_rates():
 
     proxy = {
         "http": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
-        "htts": f"https://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
+        "https": f"https://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
     }
 
     url = "https://www.cbr-xml-daily.ru/daily_json.js"
