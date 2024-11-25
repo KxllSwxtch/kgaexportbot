@@ -1,4 +1,3 @@
-import chromedriver_binary
 import time
 import pickle
 import telebot
@@ -8,6 +7,8 @@ import requests
 import locale
 import datetime
 import logging
+
+from telebot import apihelper
 from telebot import types
 from dotenv import load_dotenv
 from selenium import webdriver
@@ -35,8 +36,10 @@ PROXY_PASS = "GBno0x"
 
 proxy = {
     "http": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
-    "https": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
+    "https": f"https://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
 }
+
+apihelper.proxy = proxy
 
 session = requests.Session()
 
