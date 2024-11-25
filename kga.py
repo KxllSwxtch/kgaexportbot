@@ -331,11 +331,10 @@ def get_car_info(url):
             # Переключаемся на iframe для взаимодействия
             driver.switch_to.frame(iframe)
 
-            print(driver.page_source)
-
             # Вставляем токен в поле g-recaptcha-response
-            captcha_response = driver.find_element(By.ID, "g-recaptcha-response")
-            driver.execute_script(f"arguments[0].value = '{token}'", captcha_response)
+            checkbox = driver.find_element(By.ID, "recaptcha-anchor")
+            checkbox.click()
+            # driver.execute_script(f"arguments[0].value = '{token}'", captcha_response)
 
             # Возвращаемся к основному контексту страницы
             driver.switch_to.default_content()
