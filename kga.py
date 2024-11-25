@@ -34,6 +34,11 @@ PROXY_PASS = "GBno0x"
 
 https_proxy = f"https://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}"
 
+proxy = {
+    "http": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
+    "https": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
+}
+
 session = requests.Session()
 
 # Configure logging
@@ -46,7 +51,9 @@ logging.basicConfig(
 # Load keys from .env file
 load_dotenv()
 bot_token = os.getenv("BOT_TOKEN")
-bot = telebot.TeleBot(bot_token)
+bot = telebot.TeleBot(
+    bot_token, base_url="https://api.telegram.org", request_kwargs={"proxies": proxy}
+)
 
 # Set locale for number formatting
 locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
@@ -97,11 +104,6 @@ def set_bot_commands():
 # Функция для получения курсов валют с API
 def get_currency_rates():
     global usd_rate
-
-    proxy = {
-        "http": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
-        "https": f"https://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
-    }
 
     url = "https://www.cbr-xml-daily.ru/daily_json.js"
     response = requests.get(url, proxies=proxy)
