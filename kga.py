@@ -286,17 +286,16 @@ def get_car_info(url):
     try:
         # Загружаем страницу
         driver.get(url)
-        time.sleep(10)
-        check_and_handle_alert(driver)
+        # check_and_handle_alert(driver)
         load_cookies(driver)
 
         # Проверка на reCAPTCHA
-        if "reCAPTCHA" in driver.page_source:
-            print("Обнаружена reCAPTCHA. Пытаемся решить...")
-            driver.refresh()
-            time.sleep(5)
-            print("Страница обновлена после reCAPTCHA.")
-            check_and_handle_alert(driver)  # Перепроверка после обновления страницы
+        # if "reCAPTCHA" in driver.page_source:
+        #     print("Обнаружена reCAPTCHA. Пытаемся решить...")
+        #     driver.refresh()
+        #     time.sleep(5)
+        #     print("Страница обновлена после reCAPTCHA.")
+        #     check_and_handle_alert(driver)  # Перепроверка после обновления страницы
 
         save_cookies(driver)
         logging.info("Куки сохранены.")
@@ -320,6 +319,8 @@ def get_car_info(url):
 
         # Извлекаем все мета-теги
         meta_tags = driver.find_elements_by_tag_name("meta")
+
+        print(meta_tags)
 
         # Перебираем мета-теги и извлекаем данные
         for tag in meta_tags:
