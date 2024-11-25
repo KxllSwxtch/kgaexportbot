@@ -345,7 +345,7 @@ def get_car_info(url):
                 "arguments[0].style.display = 'block';", captcha_response
             )
 
-            print(captcha_response.text)
+            print(captcha_response)
 
             driver.execute_script(f"arguments[0].value = '{token}';", captcha_response)
             print("Токен вставлен в g-recaptcha-response.")
