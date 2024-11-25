@@ -51,9 +51,7 @@ logging.basicConfig(
 # Load keys from .env file
 load_dotenv()
 bot_token = os.getenv("BOT_TOKEN")
-bot = telebot.TeleBot(
-    bot_token, base_url="https://api.telegram.org", request_kwargs={"proxies": proxy}
-)
+bot = telebot.TeleBot(bot_token)
 
 # Set locale for number formatting
 locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
