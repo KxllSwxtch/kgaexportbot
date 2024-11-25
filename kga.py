@@ -249,7 +249,11 @@ def load_cookies(driver):
 
 def check_and_handle_alert(driver):
     try:
-        print(driver.find_element(By.CLASS_NAME, "gallery_photo"))
+        print(
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "gallery_photo"))
+            )
+        )
         WebDriverWait(driver, 5).until(EC.alert_is_present())
         alert = driver.switch_to.alert
         print(f"Обнаружено всплывающее окно: {alert.text}")
