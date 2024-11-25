@@ -339,6 +339,8 @@ def get_car_info(url):
             # Возвращаемся к основному контексту страницы
             driver.switch_to.default_content()
 
+            print(driver.page_source)
+
             # Отправляем форму
             form = driver.find_element(By.TAG_NAME, "form")
             form.submit()
