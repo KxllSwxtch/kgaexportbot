@@ -1,86 +1,106 @@
 import requests
+import time
 import re
-from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.options import Options
 from twocaptcha import TwoCaptcha
 
-
-def get_sitekey(url):
-    # Отправляем GET-запрос к странице
-    response = requests.get(url)
-
-    # Если запрос успешен
-    if response.status_code == 200:
-        # Ищем sitekey в JavaScript-коде с помощью регулярного выражения
-        match = re.search(r"grecaptcha.execute\('([a-zA-Z0-9_-]+)',", response.text)
-
-        if match:
-            # Извлекаем sitekey
-            sitekey = match.group(1)
-            return sitekey
-        else:
-            raise Exception("Не удалось найти sitekey на странице.")
-    else:
-        raise Exception(f"Ошибка при запросе страницы: {response.status_code}")
-
-
-solver = TwoCaptcha("89a8f41a0641f085c8ca6e861e0fa571")
-
+# Настройка прокси
 proxies = {
     "http": "http://B01vby:GBno0x@45.118.250.2:8000",
     "https": "http://B01vby:GBno0x@45.118.250.2:8000",
 }
 
-url = "http://www.encar.com/dc/dc_cardetailview.do?pageid=fc_carsearch&listAdvType=word&carid=37737638"
+# Создание экземпляра 2Captcha
+solver = TwoCaptcha("89a8f41a0641f085c8ca6e861e0fa571")
+
+# URL страницы
+url = "http://www.encar.com/dc/dc_cardetailview.do?pageid=fc_carsearch&listAdvType=word&carid=37737638&view_type=normal&wtClick_forList=017&advClickPosition=imp_word_p1_g8"
 
 
-def get_ip():
-    response = requests.get(
-        "https://api.ipify.org?format=json", proxies=proxies, verify=False
+# Функция для настройки Selenium с прокси
+def create_driver():
+    chrome_options = Options()
+    chrome_options.add_argument("--disable-gpu")
+    # chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")  # Необходим для работы в Heroku
+    chrome_options.add_argument("--disable-dev-shm-usage")  # Решает проблемы с памятью
+    chrome_options.add_argument("--window-size=1920,1080")  # Устанавливает размер окна
+    chrome_options.add_argument("--disable-infobars")
+    chrome_options.add_argument("--disable-extensions")
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.add_argument("--enable-logging")
+    chrome_options.add_argument("--v=1")  # Уровень логирования
+    chrome_options.add_argument(
+        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     )
-    ip = response.json()["ip"]
-    print(f"Current IP address: {ip}")
-    return ip
+
+    # Прокси для Selenium
+    webdriver.DesiredCapabilities.CHROME["proxy"] = {
+        "httpProxy": "45.118.250.2:8000",
+        "sslProxy": "45.118.250.2:8000",
+        "proxyType": "MANUAL",
+    }
+
+    # Запуск браузера
+    driver = webdriver.Chrome(options=chrome_options)
+    return driver
 
 
-print(get_ip())
+# Запуск браузера и получение токена reCAPTCHA
+def get_car_info(url):
+    driver = create_driver()
+
+    try:
+        # Открываем начальную страницу (если нужно)
+        driver.get("http://encar.com")
+
+        # Открываем страницу с автомобилем
+        driver.get(url)
+
+        # Ищем sitekey для reCAPTCHA
+        sitekey_element = driver.find_element(By.CSS_SELECTOR, ".g-recaptcha")
+        sitekey = sitekey_element.get_attribute("data-sitekey")
+        print(f"Sitekey: {sitekey}")
+
+        # Получаем токен reCAPTCHA с помощью 2Captcha
+        result = solver.recaptcha(sitekey=sitekey, url=url, version="v2")
+        token = result["code"]
+        print(f"Получен токен: {token}")
+
+        # Вставляем токен в поле g-recaptcha-response
+        captcha_response = driver.find_element(By.ID, "g-recaptcha-response")
+        driver.execute_script(f"arguments[0].value = '{token}'", captcha_response)
+
+        # Отправляем форму
+        form = driver.find_element(By.TAG_NAME, "form")
+        form.submit()
+        print("Форма отправлена!")
+
+        # Ждем, пока страница перезагрузится
+        time.sleep(2)
+
+        # Теперь можно продолжать парсинг данных о машине
+        # (просто пример, измените его в зависимости от вашей логики)
+        car_info = driver.page_source
+
+        print("Информация о машине успешно получена!")
+
+        with open("test.html", "w+") as file:
+            file.write(car_info)
+
+        return car_info
+
+    except Exception as e:
+        print(f"Ошибка при решении reCAPTCHA: {e}")
+        driver.quit()
+        return None
+
+    finally:
+        # Закрываем драйвер
+        driver.quit()
 
 
-response = requests.get(
-    url,
-    proxies=proxies,
-    verify=False,
-)
-
-
-# Если на странице есть reCAPTCHA
-if "grecaptcha" in response.text:
-    sitekey = get_sitekey(url)  # Извлекаем sitekey
-
-    # Решаем reCAPTCHA с использованием 2Captcha
-    result = solver.recaptcha(sitekey=sitekey, url=url, version="v3", score=0.9)
-    token = result["code"]
-
-    # Отправка токена на сервер
-    validation_url = "http://www.encar.com/validation_recaptcha.do?method=v3"
-    data = {"token": token}
-
-    # Отправляем POST-запрос для верификации reCAPTCHA
-    validation_response = requests.post(validation_url, data=data, proxies=proxies)
-
-    print("\n\n")
-    print(validation_response.text)
-    print("\n\n")
-
-    # Проверка ответа
-    if validation_response.status_code == 200:
-        validation_result = validation_response.json()
-        if validation_result[0]["success"]:
-            print("reCAPTCHA прошла успешно.")
-        else:
-            print("reCAPTCHA не пройдена.")
-    else:
-        print(
-            f"Ошибка при отправке запроса на верификацию reCAPTCHA: {validation_response.status_code}"
-        )
-else:
-    print("reCAPTCHA не найдена на странице.")
+get_car_info(url)

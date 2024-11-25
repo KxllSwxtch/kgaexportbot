@@ -8,6 +8,7 @@ import locale
 import datetime
 import logging
 
+from twocaptcha import TwoCaptcha
 from telebot import types
 from dotenv import load_dotenv
 from selenium import webdriver
@@ -286,25 +287,59 @@ def get_car_info(url):
         "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     )
 
+    # Прокси для Selenium
+    # webdriver.DesiredCapabilities.CHROME["proxy"] = {
+    #     "httpProxy": "http://B01vby:GBno0x@45.118.250.2:8000",
+    #     "sslProxy": "45.118.250.2:8000",
+    #     "proxyType": "MANUAL",
+    # }
+
     # Инициализация драйвера
     service = Service(CHROMEDRIVER_PATH)
     driver = webdriver.Chrome(service=service, options=chrome_options)
+    solver = TwoCaptcha("89a8f41a0641f085c8ca6e861e0fa571")
 
     try:
+        driver.get("http://encar.com")
+        time.sleep(2)
+
         # Загружаем страницу
         driver.get(url)
-        check_and_handle_alert(driver)
-        load_cookies(driver)
+        # check_and_handle_alert(driver)
 
         # Проверка на reCAPTCHA
         if "reCAPTCHA" in driver.page_source:
             print("Обнаружена reCAPTCHA. Пытаемся решить...")
-            driver.refresh()
-            check_and_handle_alert(driver)
-            print("Страница обновлена после reCAPTCHA.")
+            # driver.refresh()
+            # check_and_handle_alert(driver)
+            # print("Страница обновлена после reCAPTCHA.")
+            # Ищем sitekey для reCAPTCHA
+            sitekey_element = driver.find_element(By.CSS_SELECTOR, ".g-recaptcha")
+            sitekey = sitekey_element.get_attribute("data-sitekey")
+            print(f"Sitekey: {sitekey}")
 
-        save_cookies(driver)
-        logging.info("Куки сохранены.")
+            # Получаем токен reCAPTCHA с помощью 2Captcha
+            result = solver.recaptcha(sitekey=sitekey, url=url, version="v2")
+            token = result["code"]
+            print(f"Получен токен: {token}")
+
+            # Вставляем токен в поле g-recaptcha-response
+            captcha_response = driver.find_element(By.ID, "g-recaptcha-response")
+            driver.execute_script(f"arguments[0].value = '{token}'", captcha_response)
+
+            # Отправляем форму
+            form = driver.find_element(By.TAG_NAME, "form")
+            form.submit()
+            print("Форма отправлена!")
+
+            # Ждем, пока страница перезагрузится
+            time.sleep(2)
+
+            # Теперь можно продолжать парсинг данных о машине
+            # (просто пример, измените его в зависимости от вашей логики)
+            car_info = driver.page_source
+
+            print("Информация о машине успешно получена!")
 
         # Парсим URL для получения carid
         parsed_url = urlparse(url)
