@@ -247,7 +247,7 @@ def load_cookies(driver):
 
 def check_and_handle_alert(driver):
     try:
-        WebDriverWait(driver, 5).until(EC.alert_is_present())
+        WebDriverWait(driver, 10).until(EC.alert_is_present())
         alert = driver.switch_to.alert
         print(f"Обнаружено всплывающее окно: {alert.text}")
         alert.accept()  # Закрывает alert
@@ -300,9 +300,8 @@ def get_car_info(url):
         if "reCAPTCHA" in driver.page_source:
             print("Обнаружена reCAPTCHA. Пытаемся решить...")
             driver.refresh()
-            time.sleep(10)
+            check_and_handle_alert(driver)
             print("Страница обновлена после reCAPTCHA.")
-            check_and_handle_alert(driver)  # Перепроверка после обновления страницы
 
         save_cookies(driver)
         logging.info("Куки сохранены.")
