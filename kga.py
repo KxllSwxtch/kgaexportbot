@@ -33,8 +33,6 @@ PROXY_PORT = "8000"
 PROXY_USER = "B01vby"
 PROXY_PASS = "GBno0x"
 
-https_proxy = f"https://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}"
-
 proxy = {
     "http": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
     "https": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
@@ -271,7 +269,6 @@ def get_car_info(url):
     chrome_options.add_argument("--disable-infobars")
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_argument(f"--proxy-server={https_proxy}")
     chrome_options.add_argument("--enable-logging")
     chrome_options.add_argument("--v=1")  # Уровень логирования
     chrome_options.add_argument(
