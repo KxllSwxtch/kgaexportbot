@@ -106,7 +106,7 @@ def get_currency_rates():
     global usd_rate
 
     url = "https://www.cbr-xml-daily.ru/daily_json.js"
-    response = requests.get(url, proxies=proxy)
+    response = requests.get(url, proxies=proxy, verify=False)
     data = response.json()
 
     # Получаем курсы валют
