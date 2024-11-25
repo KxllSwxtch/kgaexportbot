@@ -98,8 +98,13 @@ def set_bot_commands():
 def get_currency_rates():
     global usd_rate
 
+    proxy = {
+        "http": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
+        "htts": f"https://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
+    }
+
     url = "https://www.cbr-xml-daily.ru/daily_json.js"
-    response = requests.get(url)
+    response = requests.get(url, proxies=proxy)
     data = response.json()
 
     # Получаем курсы валют
@@ -889,7 +894,7 @@ def format_number(number):
 
 # Run the bot
 if __name__ == "__main__":
-    # get_currency_rates()
+    get_currency_rates()
     set_bot_commands()
     bot.polling(none_stop=True)
 
