@@ -300,10 +300,6 @@ def get_car_info(url):
     solver = TwoCaptcha("89a8f41a0641f085c8ca6e861e0fa571")
 
     try:
-        driver.get("http://encar.com")
-        time.sleep(4)
-
-        # Загружаем страницу
         driver.get(url)
         # check_and_handle_alert(driver)
 
@@ -330,8 +326,12 @@ def get_car_info(url):
             token = result["code"]
             print(f"Получен токен: {token}")
 
+            time.sleep(2)
+
             # Переключаемся на iframe для взаимодействия
             driver.switch_to.frame(iframe)
+
+            print(driver.page_source)
 
             # Вставляем токен в поле g-recaptcha-response
             captcha_response = driver.find_element(By.ID, "g-recaptcha-response")
