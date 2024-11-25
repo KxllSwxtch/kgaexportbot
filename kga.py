@@ -344,6 +344,9 @@ def get_car_info(url):
             driver.execute_script(
                 "arguments[0].style.display = 'block';", captcha_response
             )
+
+            print(captcha_response.text)
+
             driver.execute_script(f"arguments[0].value = '{token}';", captcha_response)
             print("Токен вставлен в g-recaptcha-response.")
 
@@ -363,7 +366,7 @@ def get_car_info(url):
             # Получение страницы с информацией о машине
             car_info = driver.page_source
             print("Информация о машине успешно получена!")
-            print(car_info)
+            # print(car_info)
 
         # Парсим URL для получения carid
         parsed_url = urlparse(url)
