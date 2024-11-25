@@ -277,6 +277,7 @@ def get_car_info(url):
         if "reCAPTCHA" in driver.page_source:
             logging.info("Обнаружена reCAPTCHA. Пытаемся решить...")
             driver.refresh()
+            time.sleep(4)
             logging.info("Страница обновлена после reCAPTCHA.")
             check_and_handle_alert(driver)  # Перепроверка после обновления страницы
 
@@ -291,7 +292,10 @@ def get_car_info(url):
 
         # Проверка элемента areaLeaseRent
         try:
-            lease_area = driver.find_element(By.ID, "areaLeaseRent")
+            print("Поиск areaLeaseRent")
+            lease_area = WebDriverWait(driver, 5).until(
+                EC.visibility_of_element_located((By.ID, "areaLeaseRent"))
+            )
             title_element = lease_area.find_element(By.CLASS_NAME, "title")
 
             if "리스정보" in title_element.text or "렌트정보" in title_element.text:
@@ -308,6 +312,7 @@ def get_car_info(url):
 
         # Проверка элемента product_left
         try:
+            print("Поиск product_left")
             product_left = WebDriverWait(driver, 7).until(
                 EC.visibility_of_element_located((By.CLASS_NAME, "product_left"))
             )
@@ -348,6 +353,7 @@ def get_car_info(url):
 
         # Проверка элемента gallery_photo
         try:
+            print("Поиск gallery_photo")
             gallery_element = WebDriverWait(driver, 7).until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, "div.gallery_photo"))
             )
