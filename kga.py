@@ -271,7 +271,7 @@ def get_car_info(url):
     chrome_options.add_argument("--disable-infobars")
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_argument(f"--proxy-server={proxy['http']}")
+    chrome_options.add_argument(f"--proxy-server={proxy['https']}")
     chrome_options.add_argument("--enable-logging")
     chrome_options.add_argument("--v=1")  # Уровень логирования
     chrome_options.add_argument(
@@ -285,7 +285,7 @@ def get_car_info(url):
     try:
         # Загружаем страницу
         driver.get(url)
-        # check_and_handle_alert(driver)
+        check_and_handle_alert(driver)
         load_cookies(driver)
 
         print(driver.page_source)
