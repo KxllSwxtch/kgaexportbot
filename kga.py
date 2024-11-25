@@ -270,7 +270,7 @@ def get_car_info(url):
     chrome_options.add_argument("--disable-infobars")
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_argument(f"--proxy-server={https_proxy}")
+    # chrome_options.add_argument(f"--proxy-server={https_proxy}")
     chrome_options.add_argument("--enable-logging")
     chrome_options.add_argument("--v=1")  # Уровень логирования
     chrome_options.add_argument(
