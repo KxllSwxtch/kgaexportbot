@@ -311,23 +311,34 @@ def get_car_info(url):
         if "reCAPTCHA" in driver.page_source:
             print("Обнаружена reCAPTCHA. Пытаемся решить...")
 
-            print(driver.page_source)
-            # driver.refresh()
-            # check_and_handle_alert(driver)
-            # print("Страница обновлена после reCAPTCHA.")
-            # Ищем sitekey для reCAPTCHA
-            sitekey_element = driver.find_element(By.CSS_SELECTOR, ".g-recaptcha")
-            sitekey = sitekey_element.get_attribute("data-sitekey")
+            # Ищем iframe с reCAPTCHA
+            iframe = driver.find_element(By.CSS_SELECTOR, "iframe[src*='recaptcha']")
+            iframe_src = iframe.get_attribute("src")
+            print(f"Iframe src: {iframe_src}")
+
+            # Извлекаем sitekey из параметра 'k' в URL
+            match = re.search(r"[?&]k=([^&]+)", iframe_src)
+            if not match:
+                print("Sitekey не найден в iframe URL.")
+                driver.quit()
+                return
+            sitekey = match.group(1)
             print(f"Sitekey: {sitekey}")
 
-            # Получаем токен reCAPTCHA с помощью 2Captcha
+            # Решаем reCAPTCHA через 2Captcha
             result = solver.recaptcha(sitekey=sitekey, url=url, version="v2")
             token = result["code"]
             print(f"Получен токен: {token}")
 
+            # Переключаемся на iframe для взаимодействия
+            driver.switch_to.frame(iframe)
+
             # Вставляем токен в поле g-recaptcha-response
             captcha_response = driver.find_element(By.ID, "g-recaptcha-response")
             driver.execute_script(f"arguments[0].value = '{token}'", captcha_response)
+
+            # Возвращаемся к основному контексту страницы
+            driver.switch_to.default_content()
 
             # Отправляем форму
             form = driver.find_element(By.TAG_NAME, "form")
@@ -335,12 +346,10 @@ def get_car_info(url):
             print("Форма отправлена!")
 
             # Ждем, пока страница перезагрузится
-            time.sleep(2)
+            time.sleep(5)
 
             # Теперь можно продолжать парсинг данных о машине
-            # (просто пример, измените его в зависимости от вашей логики)
             car_info = driver.page_source
-
             print("Информация о машине успешно получена!")
 
         # Парсим URL для получения carid
