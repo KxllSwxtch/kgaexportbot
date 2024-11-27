@@ -21,7 +21,7 @@ h2==4.1.0
 hpack==4.0.0
 hstspreload==2024.10.1
 httpcore==0.15.0
-httpx==0.13.3
+httpx>=0.16.0
 hyperframe==6.0.1
 idna==2.10
 kaitaistruct==0.10
