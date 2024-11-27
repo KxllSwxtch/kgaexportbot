@@ -21,8 +21,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 CAPSOLVER_API_KEY = os.getenv("CAPSOLVER_API_KEY")  # Замените на ваш API-ключ CapSolver
-CHROMEDRIVER_PATH = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
-# CHROMEDRIVER_PATH = "/opt/homebrew/bin/chromedriver"
+# CHROMEDRIVER_PATH = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
+CHROMEDRIVER_PATH = "/opt/homebrew/bin/chromedriver"
 COOKIES_FILE = "cookies.pkl"
 CHANNEL_USERNAME = "@kga_korea"
 
@@ -109,6 +109,8 @@ def set_bot_commands():
 def get_currency_rates():
     global usd_rate
 
+    print_message("ПОЛУЧАЕМ КУРС ЦБ")
+
     url = "https://www.cbr-xml-daily.ru/daily_json.js"
     response = requests.get(url)
     data = response.json()
@@ -128,6 +130,7 @@ def get_currency_rates():
         f"CNY {cny_rate:.4f} ₽"
     )
 
+    print(f"{rates_text}\n\n")
     return rates_text
 
 
@@ -306,7 +309,7 @@ def create_driver():
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--window-size=1280,720")
+    chrome_options.add_argument("--window-size=800,600")
     chrome_options.add_argument("--disable-infobars")
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-javascript")  # Отключение JavaScript
@@ -317,6 +320,15 @@ def create_driver():
     chrome_options.add_argument(
         "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     )
+
+    prefs = {
+        "profile.managed_default_content_settings.images": 2,  # Отключаем загрузку тяжёлых изображений
+        "profile.managed_default_content_settings.stylesheets": 2,  # Отключаем загрузку CSS
+        "profile.default_content_setting_values.notifications": 2,  # Отключить уведомления
+        "credentials_enable_service": False,
+        "profile.password_manager_enabled": False,
+    }
+    chrome_options.add_experimental_option("prefs", prefs)
 
     seleniumwire_options = {"proxy": proxy}
 
@@ -579,12 +591,10 @@ def get_insurance_total():
         driver.get(url)
 
         try:
-            smlist_element = WebDriverWait(driver, 7).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "smlist"))
-            )
+            smlist_element = driver.find_element(By.CLASS_NAME, "smlist")
         except NoSuchElementException:
             print("Элемент 'smlist' не найден.")
-            return ["Нет данных", "Нет данных"]
+            return ["0", "0"]
 
         # Находим таблицу
         table = smlist_element.find_element(By.TAG_NAME, "table")
