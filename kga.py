@@ -35,6 +35,7 @@ PROXY_PASS = "GBno0x"
 proxy = {
     "http": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
     "https": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
+    "no_proxy": "localhost,127.0.0.1",
 }
 
 
