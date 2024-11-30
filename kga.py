@@ -356,17 +356,17 @@ def get_car_info(url):
 
         driver.get(f"https://www.encar.com/dc/dc_cardetailview.do?carid={car_id}")
 
-        if "reCAPTCHA" in driver.page_source:
-            is_recaptcha_solved = False
-            print_message("Обнаружена reCAPTCHA, решаем...")
+        # if "reCAPTCHA" in driver.page_source:
+        #     is_recaptcha_solved = False
+        #     print_message("Обнаружена reCAPTCHA, решаем...")
 
-            sitekey = extract_sitekey(driver, url)
-            print(f"Sitekey: {sitekey}")
+        #     sitekey = extract_sitekey(driver, url)
+        #     print(f"Sitekey: {sitekey}")
 
-            result = solver.recaptcha(sitekey, url)
-            print(f'reCAPTCHA result: {result["code"][0:50]}...')
+        #     result = solver.recaptcha(sitekey, url)
+        #     print(f'reCAPTCHA result: {result["code"][0:50]}...')
 
-            is_recaptcha_solved = send_recaptcha_token(result["code"])
+        #     is_recaptcha_solved = send_recaptcha_token(result["code"])
 
         if is_recaptcha_solved:
             # Достаём данные об авто после решения капчи
