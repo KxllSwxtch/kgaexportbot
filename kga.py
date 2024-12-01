@@ -245,11 +245,10 @@ def get_ip():
         "https://api.ipify.org?format=json", verify=True, proxies=proxy
     )
     ip = response.json()["ip"]
-    print(f"Current IP address: {ip}")
     return ip
 
 
-print(get_ip())
+print_message(f"Current IP address: {get_ip()}")
 
 
 def extract_sitekey(driver, url):
@@ -309,21 +308,18 @@ def create_driver():
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--window-size=800,600")
+    chrome_options.add_argument("--start-maximized")
     chrome_options.add_argument("--disable-infobars")
     chrome_options.add_argument("--disable-extensions")
-    chrome_options.add_argument("--disable-javascript")  # Отключение JavaScript
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_argument("--enable-logging")
     chrome_options.add_argument("--v=1")
     chrome_options.add_argument("--remote-debugging-port=9222")
     chrome_options.add_argument(
-        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.6723.92 Safari/537.36"
     )
 
     prefs = {
-        "profile.managed_default_content_settings.images": 2,  # Отключаем загрузку тяжёлых изображений
-        "profile.managed_default_content_settings.stylesheets": 2,  # Отключаем загрузку CSS
         "profile.default_content_setting_values.notifications": 2,  # Отключить уведомления
         "credentials_enable_service": False,
         "profile.password_manager_enabled": False,
@@ -332,10 +328,21 @@ def create_driver():
 
     seleniumwire_options = {"proxy": proxy}
 
-    # Запуск браузера
     driver = webdriver.Chrome(
         options=chrome_options, seleniumwire_options=seleniumwire_options
     )
+
+    driver.execute_cdp_cmd(
+        "Page.addScriptToEvaluateOnNewDocument",
+        {
+            "source": """
+          Object.defineProperty(navigator, 'webdriver', {
+            get: () => undefined
+          })
+        """
+        },
+    )
+
     return driver
 
 
@@ -371,9 +378,7 @@ def get_car_info(url):
         if is_recaptcha_solved:
             # Достаём данные об авто после решения капчи
             car_date, car_price, car_engine_displacement, car_title = "", "", "", ""
-            meta_elements = WebDriverWait(driver, 5).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "meta[name^='WT.']"))
-            )
+            meta_elements = driver.find_elements(By.CSS_SELECTOR, "meta[name^='WT.']")
 
             meta_data = {}
             for meta in meta_elements:
