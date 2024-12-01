@@ -371,7 +371,9 @@ def get_car_info(url):
         if is_recaptcha_solved:
             # Достаём данные об авто после решения капчи
             car_date, car_price, car_engine_displacement, car_title = "", "", "", ""
-            meta_elements = driver.find_elements(By.CSS_SELECTOR, "meta[name^='WT.']")
+            meta_elements = WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "meta[name^='WT.']"))
+            )
 
             meta_data = {}
             for meta in meta_elements:
