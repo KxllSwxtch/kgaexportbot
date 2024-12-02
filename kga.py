@@ -585,34 +585,42 @@ def calculate_cost(link, message):
 
 # Function to get insurance total
 def get_insurance_total():
-    global car_id_external
-
     print_message("[ЗАПРОС] ТЕХНИЧЕСКИЙ ОТЧËТ ОБ АВТОМОБИЛЕ")
 
-    driver = create_driver()
+    global car_id_external
 
-    # Формируем URL
-    url = f"http://www.encar.com/dc/dc_cardetailview.do?method=kidiFirstPop&carid={car_id_external}&wtClick_carview=044"
+    url = f"https://fem.encar.com/cars/report/accident/{car_id_external}"
+    driver = create_driver()
 
     try:
         driver.get(url)
 
+        # Пробуем найти элемент 'smlist' без явного ожидания
+        time.sleep(2)
         try:
-            smlist_element = driver.find_element(By.CLASS_NAME, "smlist")
+            report_accident_summary_element = WebDriverWait(driver, 6).until(
+                EC.presence_of_element_located(
+                    (By.CLASS_NAME, "ReportAccidentSummary_list_accident__q6vLx")
+                )
+            )
         except NoSuchElementException:
-            print("Элемент 'smlist' не найден.")
-            return ["0", "0"]
+            print("Элемент 'ReportAccidentSummary_list_accident__q6vLx' не найден.")
+            return ["Нет данных", "Нет данных"]
 
-        # Находим таблицу
-        table = smlist_element.find_element(By.TAG_NAME, "table")
-        rows = table.find_elements(By.TAG_NAME, "tr")
+        report_accident_summary_element_splitted = (
+            report_accident_summary_element.text.split("\n")
+        )
 
         # Извлекаем данные
         damage_to_my_car = (
-            rows[4].find_elements(By.TAG_NAME, "td")[1].text if len(rows) > 4 else "0"
+            report_accident_summary_element_splitted[4]
+            if len(report_accident_summary_element.text) > 4
+            else "0"
         )
         damage_to_other_car = (
-            rows[5].find_elements(By.TAG_NAME, "td")[1].text if len(rows) > 5 else "0"
+            report_accident_summary_element_splitted[5]
+            if len(report_accident_summary_element.text) > 5
+            else "0"
         )
 
         # Упрощенная функция для извлечения числа
