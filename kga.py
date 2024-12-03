@@ -23,7 +23,6 @@ from selenium.webdriver.support import expected_conditions as EC
 CAPSOLVER_API_KEY = os.getenv("CAPSOLVER_API_KEY")  # Замените на ваш API-ключ CapSolver
 # CHROMEDRIVER_PATH = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
 CHROMEDRIVER_PATH = "/opt/homebrew/bin/chromedriver"
-COOKIES_FILE = "cookies.pkl"
 CHANNEL_USERNAME = "@kga_korea"
 
 # Proxy
@@ -308,13 +307,12 @@ def create_driver():
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--start-maximized")
+    # chrome_options.add_argument("--start-maximized")
     chrome_options.add_argument("--disable-infobars")
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_argument("--enable-logging")
-    chrome_options.add_argument("--v=1")
-    chrome_options.add_argument("--remote-debugging-port=9222")
+    chrome_options.add_argument("--ignore-certificate-errors-spki-list")
+    chrome_options.add_argument("--ignore-ssl-errors")
     chrome_options.add_argument(
         "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.6723.92 Safari/537.36"
     )
@@ -330,17 +328,6 @@ def create_driver():
 
     driver = webdriver.Chrome(
         options=chrome_options, seleniumwire_options=seleniumwire_options
-    )
-
-    driver.execute_cdp_cmd(
-        "Page.addScriptToEvaluateOnNewDocument",
-        {
-            "source": """
-          Object.defineProperty(navigator, 'webdriver', {
-            get: () => undefined
-          })
-        """
-        },
     )
 
     return driver
@@ -361,7 +348,7 @@ def get_car_info(url):
 
         is_recaptcha_solved = True
 
-        driver.get(f"https://www.encar.com/dc/dc_cardetailview.do?carid={car_id}")
+        driver.get(f"http://www.encar.com/dc/dc_cardetailview.do?carid={car_id}")
 
         # if "reCAPTCHA" in driver.page_source:
         #     is_recaptcha_solved = False
