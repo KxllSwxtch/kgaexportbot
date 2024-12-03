@@ -583,12 +583,9 @@ def get_insurance_total():
         driver.get(url)
 
         # Пробуем найти элемент 'smlist' без явного ожидания
-        time.sleep(2)
         try:
-            report_accident_summary_element = WebDriverWait(driver, 6).until(
-                EC.presence_of_element_located(
-                    (By.CLASS_NAME, "ReportAccidentSummary_list_accident__q6vLx")
-                )
+            report_accident_summary_element = driver.find_element(
+                By.CLASS_NAME, "ReportAccidentSummary_list_accident__q6vLx"
             )
         except NoSuchElementException:
             print("Элемент 'ReportAccidentSummary_list_accident__q6vLx' не найден.")
