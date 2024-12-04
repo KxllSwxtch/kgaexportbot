@@ -344,11 +344,12 @@ def get_car_info(url):
     car_id = query_params.get("carid", [None])[0]
 
     try:
-        solver = TwoCaptcha("89a8f41a0641f085c8ca6e861e0fa571")
+        # solver = TwoCaptcha("89a8f41a0641f085c8ca6e861e0fa571")
 
         is_recaptcha_solved = True
 
         driver.get(f"http://www.encar.com/dc/dc_cardetailview.do?carid={car_id}")
+        # time.sleep(50)
 
         # if "reCAPTCHA" in driver.page_source:
         #     is_recaptcha_solved = False
