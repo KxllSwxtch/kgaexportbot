@@ -247,7 +247,7 @@ def get_ip():
     return ip
 
 
-print_message(f"Current IP address: {get_ip()}")
+# print_message(f"Current IP address: {get_ip()}")
 
 
 def extract_sitekey(driver, url):
@@ -348,8 +348,8 @@ def get_car_info(url):
 
         is_recaptcha_solved = True
 
-        driver.get(f"http://www.encar.com/dc/dc_cardetailview.do?carid={car_id}")
-        # time.sleep(50)
+        driver.get(url)
+        time.sleep(3)
 
         # if "reCAPTCHA" in driver.page_source:
         #     is_recaptcha_solved = False
@@ -366,30 +366,37 @@ def get_car_info(url):
         if is_recaptcha_solved:
             # Достаём данные об авто после решения капчи
             car_date, car_price, car_engine_displacement, car_title = "", "", "", ""
-            meta_elements = driver.find_elements(By.CSS_SELECTOR, "meta[name^='WT.']")
 
-            meta_data = {}
-            for meta in meta_elements:
-                name = meta.get_attribute("name")
-                content = meta.get_attribute("content")
-                meta_data[name] = content
+            price_el = driver.find_element(By.CLASS_NAME, "DetailLeadCase_point__vdG4b")
+            car_price = re.sub(r"\D", "", price_el.text)
+            time.sleep(3)
 
-            car_date = f'01{meta_data["WT.z_month"]}{meta_data["WT.z_year"][-2:]}'
-            car_price = meta_data["WT.z_price"]
-            car_title = f'{meta_data["WT.z_model_name"]} {meta_data["WT.z_model"]}'
+            button = WebDriverWait(driver, 2).until(
+                EC.element_to_be_clickable(
+                    (By.XPATH, "//button[contains(text(), '자세히')]")
+                )
+            )
+            button.click()
+            time.sleep(2)
 
-            try:
-                dsp_element = driver.find_element(By.ID, "dsp")
-                car_engine_displacement = dsp_element.get_attribute("value")
-            except Exception as e:
-                print(f"Ошибка при получении объема двигателя: {e}")
+            content = driver.find_element(
+                By.CLASS_NAME,
+                "BottomSheet-module_bottom_sheet__LeljN",
+            )
+            splitted_content = content.text.split("\n")
+            car_engine_displacement = re.sub(r"\D", "", splitted_content[9])
+
+            car_date = splitted_content[5]
+            year = car_date.split("년")[0].strip()  # Получаем '24'
+            month = car_date.split("년")[1].replace("월", "").strip()  # Получаем '02'
+            formatted_car_date = f"01{month}{year}"
 
             print(car_title)
-            print(f"Registration Date: {car_date}")
+            print(f"Registration Date: {formatted_car_date}")
             print(f"Car Engine Displacement: {car_engine_displacement}")
             print(f"Price: {car_price}")
 
-            new_url = f"https://plugin-back-versusm.amvera.io/car-ab-korea/{car_id}?price={car_price}&date={car_date}&volume={car_engine_displacement}"
+            new_url = f"https://plugin-back-versusm.amvera.io/car-ab-korea/{car_id}?price={car_price}&date={formatted_car_date}&volume={car_engine_displacement}"
 
             driver.quit()
             return [new_url, car_title]
@@ -427,7 +434,7 @@ def calculate_cost(link, message):
             send_error_message(message, "🚫 Не удалось извлечь carid из ссылки.")
             return
 
-    link = f"http://www.encar.com/dc/dc_cardetailview.do?carid={car_id}"
+    link = f"https://fem.encar.com/cars/detail/{car_id}"
     # Get car info and new URL
     result = get_car_info(link)
 
@@ -514,12 +521,14 @@ def calculate_cost(link, message):
                 # Price in RUB
                 total_cost_rub = total_cost_usd * usd_rate
 
+                preview_link = f"https://fem.encar.com/cars/detail/{car_id}"
+
                 result_message = (
                     f"Возраст: {age_formatted}\n"
                     f"Стоимость: {price_formatted} KRW\n"
                     f"Объём двигателя: {engine_volume_formatted}\n\n"
                     f"Стоимость автомобиля под ключ до Владивостока: \n**{format_number(total_cost_rub)}₽ / {format_number(total_cost_usd)}$**\n\n"
-                    f"🔗 [Ссылка на автомобиль]({link})\n\n"
+                    f"🔗 [Ссылка на автомобиль]({preview_link})\n\n"
                     "Если данное авто попадает под санкции, пожалуйста уточните возможность отправки в вашу страну у менеджера @alekseyan85\n\n"
                     "🔗[Официальный телеграм канал](https://t.me/kga_korea)\n"
                 )
