@@ -387,8 +387,8 @@ def get_car_info(url):
             car_engine_displacement = re.sub(r"\D", "", splitted_content[9])
 
             car_date = splitted_content[5]
-            year = car_date.split("년")[0].strip()  # Получаем '24'
-            month = car_date.split("년")[1].replace("월", "").strip()  # Получаем '02'
+            year = re.sub(r"\D", "", car_date.split(" ")[0])
+            month = re.sub(r"\D", "", car_date.split(" ")[1])
             formatted_car_date = f"01{month}{year}"
 
             print(car_title)
