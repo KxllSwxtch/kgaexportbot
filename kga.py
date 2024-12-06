@@ -342,6 +342,7 @@ def get_car_info(url):
     parsed_url = urlparse(url)
     query_params = parse_qs(parsed_url.query)
     car_id = query_params.get("carid", [None])[0]
+    car_id_external = car_id
 
     try:
         # solver = TwoCaptcha("89a8f41a0641f085c8ca6e861e0fa571")
@@ -411,7 +412,7 @@ def get_car_info(url):
 
 # Function to calculate the total cost
 def calculate_cost(link, message):
-    global car_data
+    global car_data, car_id_external
     print_message("ЗАПРОС НА РАСЧËТ АВТОМОБИЛЯ")
 
     bot.send_message(
@@ -422,17 +423,21 @@ def calculate_cost(link, message):
     query_params = parse_qs(parsed_url.query)
     car_id = query_params.get("carid", [None])[0]
 
-    # Check if the link is from the mobile version
+    # Проверка ссылки на мобильную версию
     if "fem.encar.com" in link:
-        # Extract all digits from the mobile link
         car_id_match = re.findall(r"\d+", link)
         if car_id_match:
             car_id = car_id_match[0]  # Use the first match of digits
-            # Create the new URL
-            link = f"http://www.encar.com/dc/dc_cardetailview.do?carid={car_id}"
+            car_id_external = car_id
+            link = f"https://fem.encar.com/cars/detail/{car_id}"
         else:
             send_error_message(message, "🚫 Не удалось извлечь carid из ссылки.")
             return
+    else:
+        # Извлекаем carid с URL encar
+        parsed_url = urlparse(link)
+        query_params = parse_qs(parsed_url.query)
+        car_id = query_params.get("carid", [None])[0]
 
     link = f"https://fem.encar.com/cars/detail/{car_id}"
     # Get car info and new URL
@@ -582,40 +587,28 @@ def calculate_cost(link, message):
 
 # Function to get insurance total
 def get_insurance_total():
-    print_message("[ЗАПРОС] ТЕХНИЧЕСКИЙ ОТЧËТ ОБ АВТОМОБИЛЕ")
-
     global car_id_external
 
-    url = f"https://fem.encar.com/cars/report/accident/{car_id_external}"
+    print_message("[ЗАПРОС] ТЕХНИЧЕСКИЙ ОТЧËТ ОБ АВТОМОБИЛЕ")
+
     driver = create_driver()
+    url = f"http://fem.encar.com/cars/report/accident/{car_id_external}"
 
     try:
         driver.get(url)
+        time.sleep(5)
 
-        # Пробуем найти элемент 'smlist' без явного ожидания
         try:
-            report_accident_summary_element = driver.find_element(
+            report_accident_el = driver.find_element(
                 By.CLASS_NAME, "ReportAccidentSummary_list_accident__q6vLx"
             )
+
+            splitted_report = report_accident_el.text.split("\n")
+            damage_to_my_car = splitted_report[4]
+            damage_to_other_car = splitted_report[5]
         except NoSuchElementException:
-            print("Элемент 'ReportAccidentSummary_list_accident__q6vLx' не найден.")
+            print("Элемент 'smlist' не найден.")
             return ["Нет данных", "Нет данных"]
-
-        report_accident_summary_element_splitted = (
-            report_accident_summary_element.text.split("\n")
-        )
-
-        # Извлекаем данные
-        damage_to_my_car = (
-            report_accident_summary_element_splitted[4]
-            if len(report_accident_summary_element.text) > 4
-            else "0"
-        )
-        damage_to_other_car = (
-            report_accident_summary_element_splitted[5]
-            if len(report_accident_summary_element.text) > 5
-            else "0"
-        )
 
         # Упрощенная функция для извлечения числа
         def extract_large_number(damage_text):
