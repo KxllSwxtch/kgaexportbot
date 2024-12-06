@@ -59,7 +59,7 @@ last_error_message_id = {}
 
 # global variables
 car_data = {}
-car_id_external = ""
+car_id_external = None
 usd_rate = None
 
 
@@ -338,11 +338,12 @@ def get_car_info(url):
 
     driver = create_driver()
 
-    # Извлекаем carid с URL encar
-    parsed_url = urlparse(url)
-    query_params = parse_qs(parsed_url.query)
-    car_id = query_params.get("carid", [None])[0]
-    car_id_external = car_id
+    car_id_match = re.findall(r"\d+", url)
+    if car_id_match:
+        car_id = car_id_match[0]  # Use the first match of digits
+        car_id_external = car_id
+
+    print(car_id_external)
 
     try:
         # solver = TwoCaptcha("89a8f41a0641f085c8ca6e861e0fa571")
@@ -434,14 +435,8 @@ def calculate_cost(link, message):
         else:
             send_error_message(message, "🚫 Не удалось извлечь carid из ссылки.")
             return
-    else:
-        # Извлекаем carid с URL encar
-        parsed_url = urlparse(link)
-        query_params = parse_qs(parsed_url.query)
-        car_id = query_params.get("carid", [None])[0]
 
     link = f"https://fem.encar.com/cars/detail/{car_id}"
-    # Get car info and new URL
     result = get_car_info(link)
 
     if result is None:
