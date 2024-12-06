@@ -304,7 +304,7 @@ def send_recaptcha_token(token):
 def create_driver():
     chrome_options = Options()
     chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--headless")
+    # chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     # chrome_options.add_argument("--start-maximized")
@@ -422,6 +422,7 @@ def calculate_cost(link, message):
     parsed_url = urlparse(link)
     query_params = parse_qs(parsed_url.query)
     car_id = query_params.get("carid", [None])[0]
+    car_id_external = car_id
 
     # Проверка ссылки на мобильную версию
     if "fem.encar.com" in link:
