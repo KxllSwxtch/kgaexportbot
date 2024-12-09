@@ -837,4 +837,4 @@ def format_number(number):
 if __name__ == "__main__":
     get_currency_rates()
     set_bot_commands()
-    bot.polling(none_stop=True)
+    bot.infinity_polling()
