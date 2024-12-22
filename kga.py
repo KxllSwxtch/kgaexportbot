@@ -692,6 +692,11 @@ def handle_callback_query(call):
         )
 
     elif call.data == "technical_report":
+        bot.send_message(
+            call.message.chat.id,
+            "Получаем технический отчёт об автомобиле. Пожалуйста подождите ⏳",
+        )
+
         # Retrieve insurance information
         insurance_info = get_insurance_total()
 
