@@ -522,8 +522,6 @@ def calculate_cost(link, message):
             bot.delete_message(message.chat.id, processing_message.message_id)
             return
 
-    new_url, car_title = result
-
     # Проверка на наличие информации о лизинге
     if not new_url and car_title:
         # Inline buttons for further actions
