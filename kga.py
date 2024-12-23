@@ -1,5 +1,4 @@
 import time
-import pickle
 import telebot
 import os
 import re
@@ -7,8 +6,8 @@ import requests
 import locale
 import datetime
 import logging
+import psycopg2
 
-from twocaptcha import TwoCaptcha
 from telebot import types
 from dotenv import load_dotenv
 from seleniumwire import webdriver
@@ -30,6 +29,8 @@ PROXY_IP = "45.118.250.2"
 PROXY_PORT = "8000"
 PROXY_USER = "B01vby"
 PROXY_PASS = "GBno0x"
+
+DATABASE_URL = "postgres://uea5qru3fhjlj:p44343a46d4f1882a5ba2413935c9b9f0c284e6e759a34cf9569444d16832d4fe@c97r84s7psuajm.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/d9pr93olpfl9bj"
 
 proxy = {
     "http": f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_IP}:{PROXY_PORT}",
@@ -61,6 +62,43 @@ last_error_message_id = {}
 car_data = {}
 car_id_external = None
 usd_rate = None
+
+
+# def initialize_db():
+#     # Создаем подключение к базе данных PostgreSQL
+#     conn = psycopg2.connect(DATABASE_URL, sslmode="require")
+#     cursor = conn.cursor()
+
+#     # Создание таблицы для хранения статистики пользователей, если её нет
+#     cursor.execute(
+#         """
+#         CREATE TABLE IF NOT EXISTS user_stats (
+#             user_id SERIAL PRIMARY KEY,
+#             username TEXT,
+#             first_name TEXT,
+#             last_name TEXT,
+#             join_date DATE
+#         )
+#         """
+#     )
+
+#     # Создание таблицы для хранения данных об автомобилях, если её нет
+#     cursor.execute(
+#         """
+#         CREATE TABLE IF NOT EXISTS car_info (
+#             car_id SERIAL PRIMARY KEY,
+#             date TEXT NOT NULL,
+#             engine_volume TEXT NOT NULL,
+#             price TEXT NOT NULL,
+#             UNIQUE (date, engine_volume, price)
+#         )
+#         """
+#     )
+
+#     # Сохраняем изменения
+#     conn.commit()
+#     cursor.close()
+#     conn.close()
 
 
 def print_message(msg: str):
@@ -339,11 +377,8 @@ def get_car_info(url):
     driver = create_driver()
 
     car_id_match = re.findall(r"\d+", url)
-    if car_id_match:
-        car_id = car_id_match[0]  # Use the first match of digits
-        car_id_external = car_id
-
-    print(car_id_external)
+    car_id = car_id_match[0]
+    car_id_external = car_id
 
     try:
         # solver = TwoCaptcha("89a8f41a0641f085c8ca6e861e0fa571")
@@ -398,6 +433,22 @@ def get_car_info(url):
             print(f"Car Engine Displacement: {car_engine_displacement}")
             print(f"Price: {car_price}")
 
+            # Сохранение данных в базу
+            conn = psycopg2.connect(DATABASE_URL, sslmode="require")
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO car_info (car_id, date, engine_volume, price)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (car_id) DO NOTHING
+                """,
+                (car_id, formatted_car_date, car_engine_displacement, car_price),
+            )
+            conn.commit()
+            cursor.close()
+            conn.close()
+            print("Автомобиль был сохранён в базе данных")
+
             new_url = f"https://plugin-back-versusm.amvera.io/car-ab-korea/{car_id}?price={car_price}&date={formatted_car_date}&volume={car_engine_displacement}"
 
             driver.quit()
@@ -416,14 +467,11 @@ def calculate_cost(link, message):
     global car_data, car_id_external
     print_message("ЗАПРОС НА РАСЧËТ АВТОМОБИЛЯ")
 
-    bot.send_message(
+    processing_message = bot.send_message(
         message.chat.id, "Данные переданы в обработку. Пожалуйста подождите ⏳"
     )
 
-    parsed_url = urlparse(link)
-    query_params = parse_qs(parsed_url.query)
-    car_id = query_params.get("carid", [None])[0]
-    car_id_external = car_id
+    car_id = None
 
     # Проверка ссылки на мобильную версию
     if "fem.encar.com" in link:
@@ -435,16 +483,44 @@ def calculate_cost(link, message):
         else:
             send_error_message(message, "🚫 Не удалось извлечь carid из ссылки.")
             return
+    else:
+        # Извлекаем carid с URL encar
+        parsed_url = urlparse(link)
+        query_params = parse_qs(parsed_url.query)
+        car_id = query_params.get("carid", [None])[0]
 
-    link = f"https://fem.encar.com/cars/detail/{car_id}"
-    result = get_car_info(link)
+    # Проверяем наличие автомобиля в базе данных
+    conn = psycopg2.connect(DATABASE_URL, sslmode="require")
+    cursor = conn.cursor()
 
-    if result is None:
-        send_error_message(
-            message,
-            "🚫 Произошла ошибка при получении данных. Проверьте ссылку и попробуйте снова.",
+    cursor.execute(
+        "SELECT date, engine_volume, price FROM car_info WHERE car_id = %s", (car_id,)
+    )
+    car_from_db = cursor.fetchone()
+    new_url = ""
+    car_title = ""
+
+    if car_from_db:
+        # Автомобиль найден в БД, используем данные
+        date, engine_volume, price = car_from_db
+        print(
+            f"Автомобиль найден в базе данных: {car_id}, {date}, {engine_volume}, {price}"
         )
-        return
+        new_url = f"https://plugin-back-versusm.amvera.io/car-ab-korea/{car_id}?price={price}&date={date}&volume={engine_volume}"
+    else:
+        print("Автомобиль не был найден в базе данных.")
+        # Автомобиля нет в базе, вызываем get_car_info
+        result = get_car_info(link)
+        new_url, car_title = result
+
+        if result is None:
+            print(f"Ошибка при вызове get_car_info для ссылки: {link}")
+            send_error_message(
+                message,
+                "🚫 Произошла ошибка при получении данных. Проверьте ссылку и попробуйте снова.",
+            )
+            bot.delete_message(message.chat.id, processing_message.message_id)
+            return
 
     new_url, car_title = result
 
