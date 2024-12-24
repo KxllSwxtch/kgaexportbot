@@ -602,13 +602,11 @@ def calculate_cost(link, message):
                     f"Возраст: {age_formatted}\n"
                     f"Стоимость: {price_formatted} KRW\n"
                     f"Объём двигателя: {engine_volume_formatted}\n\n"
-                    f"Стоимость автомобиля под ключ до Владивостока: \n**{format_number(total_cost_rub)}₽ / {format_number(total_cost_usd)}$**\n\n"
+                    f"Стоимость автомобиля под ключ до Владивостока: \n**{format_number(total_cost_rub)} ₽ / {format_number(total_cost_usd)} $**\n\n"
                     f"🔗 [Ссылка на автомобиль]({preview_link})\n\n"
                     "Если данное авто попадает под санкции, пожалуйста уточните возможность отправки в вашу страну у менеджера @alekseyan85\n\n"
                     "🔗[Официальный телеграм канал](https://t.me/kga_korea)\n"
                 )
-
-                bot.send_message(message.chat.id, result_message, parse_mode="Markdown")
 
                 # Inline buttons for further actions
                 keyboard = types.InlineKeyboardMarkup()
@@ -636,8 +634,12 @@ def calculate_cost(link, message):
                 )
 
                 bot.send_message(
-                    message.chat.id, "Что делаем дальше?", reply_markup=keyboard
+                    message.chat.id,
+                    result_message,
+                    parse_mode="Markdown",
+                    reply_markup=keyboard,
                 )
+
             else:
                 bot.send_message(
                     message.chat.id,
@@ -735,17 +737,15 @@ def handle_callback_query(call):
         # Construct cost breakdown message
         detail_message = (
             "📝 Детализация расчёта:\n\n"
-            f"Стоимость авто: <b>{car_price_formatted}$</b>\n\n"
-            f"Услуги KGA Korea: <b>{kga_export_service_fee_formatted}$</b>\n\n"
-            f"Доставка до Владивостока: <b>{delivery_fee_formatted}$</b>\n\n"
-            f"Растаможка: <b>{customs_fee_formatted}$</b>\n\n"
-            f"Оформление / Брокер: <b>{registration_fee_formatted}$</b>\n\n"
-            f"СБКТС / ЭПТС: <b>{sbkts_formatted}$</b>\n\n"
-            f"СВХ / Выгрузка: <b>{svh_formatted}$</b>\n\n\n"
+            f"Стоимость авто: <b>{car_price_formatted} $</b>\n\n"
+            f"Услуги KGA Korea: <b>{kga_export_service_fee_formatted} $</b>\n\n"
+            f"Доставка до Владивостока: <b>{delivery_fee_formatted} $</b>\n\n"
+            f"Растаможка: <b>{customs_fee_formatted} $</b>\n\n"
+            f"Оформление / Брокер: <b>{registration_fee_formatted} $</b>\n\n"
+            f"СБКТС / ЭПТС: <b>{sbkts_formatted} $</b>\n\n"
+            f"СВХ / Выгрузка: <b>{svh_formatted} $</b>\n\n\n"
             f"<b>ПРИМЕЧАНИЕ: </b> В дальнейшем наш менеджер предоставит вам точный расчёт стоимости, учитывая актуальный курс валют на <b style='text-transform: uppercase;'>день оформления</b>. Так как стоимость авто зависит от курса корейской воны и доллара, а стоимость растаможки в РФ - от курса евро.\n\nНе волнуйтесь, если цена немного изменится - это нормально. Ваше доверие - наш главный приоритет!\n\n"
         )
-
-        bot.send_message(call.message.chat.id, detail_message, parse_mode="HTML")
 
         # Inline buttons for further actions
         keyboard = types.InlineKeyboardMarkup()
@@ -762,7 +762,10 @@ def handle_callback_query(call):
         )
 
         bot.send_message(
-            call.message.chat.id, "Что делаем дальше?", reply_markup=keyboard
+            call.message.chat.id,
+            detail_message,
+            parse_mode="HTML",
+            reply_markup=keyboard,
         )
 
     elif call.data == "technical_report":
