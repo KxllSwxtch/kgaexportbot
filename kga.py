@@ -569,7 +569,9 @@ def calculate_cost(link, message):
 
             if year and engine_volume and price:
                 engine_volume_formatted = f"{format_number(int(engine_volume))} cc"
-                age_formatted = calculate_age(year)  # Расчёт возраста автомобиля
+                age_formatted = calculate_age(
+                    year, car_month
+                )  # Расчёт возраста автомобиля
 
                 details = {
                     "car_price_korea": json_response.get("result")["price"]["car"][
