@@ -911,8 +911,11 @@ def handle_message(message):
 
 # Utility function to calculate the age category
 def calculate_age(year, month):
+    # Убираем ведущий ноль у месяца, если он есть
+    month = int(month.lstrip("0")) if isinstance(month, str) else int(month)
+
     current_date = datetime.datetime.now()
-    car_date = datetime.datetime(year=int(year), month=int(month), day=1)
+    car_date = datetime.datetime(year=int(year), month=month, day=1)
 
     age_in_months = (
         (current_date.year - car_date.year) * 12 + current_date.month - car_date.month
