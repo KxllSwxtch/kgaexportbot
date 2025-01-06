@@ -905,6 +905,8 @@ def handle_message(message):
 
 # Utility function to calculate the age category
 def calculate_age(year, month):
+    print_message(f"ГОД: {year} | МЕСЯЦ: {month}")
+
     current_date = datetime.datetime.now()
     car_date = datetime.datetime(year=int(year), month=int(month), day=1)
 
