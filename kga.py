@@ -509,7 +509,7 @@ def calculate_cost(link, message):
         # Автомобиль найден в БД, используем данные
         date, engine_volume, price = car_from_db
         car_month = date[
-            2:3
+            2:4
         ]  # Сохраняем месяц авто для расчёта возраста если автомобиль был найден в БД
 
         print(
@@ -911,8 +911,6 @@ def handle_message(message):
 
 # Utility function to calculate the age category
 def calculate_age(year, month):
-    print(month)
-
     # Убираем ведущий ноль у месяца, если он есть
     month = int(month.lstrip("0")) if isinstance(month, str) else int(month)
 
