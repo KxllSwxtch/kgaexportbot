@@ -427,7 +427,6 @@ def get_car_info(url):
             car_date = splitted_content[5]
             year = re.sub(r"\D", "", car_date.split(" ")[0])
 
-            # Сохраняем месяц в глобальную переменную что бы использовать её в calculate_age
             month = re.sub(r"\D", "", car_date.split(" ")[1])
             car_month = month
 
@@ -509,6 +508,10 @@ def calculate_cost(link, message):
     if car_from_db:
         # Автомобиль найден в БД, используем данные
         date, engine_volume, price = car_from_db
+        car_month = date[
+            2:3
+        ]  # Сохраняем месяц авто для расчёта возраста если автомобиль был найден в БД
+
         print(
             f"Автомобиль найден в базе данных: {car_id}, {date}, {engine_volume}, {price}"
         )
@@ -560,12 +563,13 @@ def calculate_cost(link, message):
 
             # Extract year from the car date string
             year = json_response.get("result")["car"]["date"].split()[-1]
+
             engine_volume = json_response.get("result")["car"]["engineVolume"]
             price = json_response.get("result")["price"]["car"]["krw"]
 
             if year and engine_volume and price:
                 engine_volume_formatted = f"{format_number(int(engine_volume))} cc"
-                age_formatted = calculate_age(year, car_month)
+                age_formatted = calculate_age(year)  # Расчёт возраста автомобиля
 
                 details = {
                     "car_price_korea": json_response.get("result")["price"]["car"][
@@ -905,8 +909,6 @@ def handle_message(message):
 
 # Utility function to calculate the age category
 def calculate_age(year, month):
-    print_message(f"ГОД: {year} | МЕСЯЦ: {month}")
-
     current_date = datetime.datetime.now()
     car_date = datetime.datetime(year=int(year), month=int(month), day=1)
 
