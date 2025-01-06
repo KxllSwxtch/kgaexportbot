@@ -911,6 +911,8 @@ def handle_message(message):
 
 # Utility function to calculate the age category
 def calculate_age(year, month):
+    print(month)
+
     # Убираем ведущий ноль у месяца, если он есть
     month = int(month.lstrip("0")) if isinstance(month, str) else int(month)
 
