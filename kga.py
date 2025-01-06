@@ -62,6 +62,7 @@ last_error_message_id = {}
 car_data = {}
 car_id_external = None
 usd_rate = None
+car_month = None
 
 
 # def initialize_db():
@@ -372,7 +373,7 @@ def create_driver():
 
 
 def get_car_info(url):
-    global car_id_external
+    global car_id_external, car_month
 
     driver = create_driver()
 
@@ -425,7 +426,11 @@ def get_car_info(url):
 
             car_date = splitted_content[5]
             year = re.sub(r"\D", "", car_date.split(" ")[0])
+
+            # Сохраняем месяц в глобальную переменную что бы использовать её в calculate_age
             month = re.sub(r"\D", "", car_date.split(" ")[1])
+            car_month = month
+
             formatted_car_date = f"01{month}{year}"
 
             print(car_title)
@@ -464,7 +469,8 @@ def get_car_info(url):
 
 # Function to calculate the total cost
 def calculate_cost(link, message):
-    global car_data, car_id_external
+    global car_data, car_id_external, car_month
+
     print_message("ЗАПРОС НА РАСЧËТ АВТОМОБИЛЯ")
 
     processing_message = bot.send_message(
@@ -559,7 +565,7 @@ def calculate_cost(link, message):
 
             if year and engine_volume and price:
                 engine_volume_formatted = f"{format_number(int(engine_volume))} cc"
-                age_formatted = calculate_age(year)
+                age_formatted = calculate_age(year, car_month)
 
                 details = {
                     "car_price_korea": json_response.get("result")["price"]["car"][
@@ -898,13 +904,17 @@ def handle_message(message):
 
 
 # Utility function to calculate the age category
-def calculate_age(year):
-    current_year = datetime.datetime.now().year
-    age = current_year - int(year)
+def calculate_age(year, month):
+    current_date = datetime.datetime.now()
+    car_date = datetime.datetime(year=int(year), month=int(month), day=1)
 
-    if age < 3:
+    age_in_months = (
+        (current_date.year - car_date.year) * 12 + current_date.month - car_date.month
+    )
+
+    if age_in_months < 36:
         return f"До 3 лет"
-    elif 3 <= age < 5:
+    elif 36 <= age_in_months < 60:
         return f"от 3 до 5 лет"
     else:
         return f"от 5 лет"
