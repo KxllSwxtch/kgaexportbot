@@ -1,146 +1,92 @@
 def get_car_info(url):
-    global car_id_external
+    global car_id_external, car_month
 
-    chrome_options = Options()
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")  # Необходим для работы в Heroku
-    chrome_options.add_argument("--disable-dev-shm-usage")  # Решает проблемы с памятью
-    chrome_options.add_argument("--window-size=1920,1080")  # Устанавливает размер окна
-    chrome_options.add_argument("--disable-infobars")
-    chrome_options.add_argument("--disable-extensions")
-    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_argument("--enable-logging")
-    chrome_options.add_argument("--v=1")  # Уровень логирования
-    chrome_options.add_argument(
-        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    )
+    driver = create_driver()
 
-    # Инициализация драйвера
-    service = Service(CHROMEDRIVER_PATH)
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-    solver = TwoCaptcha("89a8f41a0641f085c8ca6e861e0fa571")
+    car_id_match = re.findall(r"\d+", url)
+    car_id = car_id_match[0]
+    car_id_external = car_id
 
     try:
+        # solver = TwoCaptcha("89a8f41a0641f085c8ca6e861e0fa571")
+
+        is_recaptcha_solved = True
+
         driver.get(url)
-        # check_and_handle_alert(driver)
+        time.sleep(3)
 
-        # Проверка на reCAPTCHA
-        if "reCAPTCHA" in driver.page_source:
-            print("Обнаружена reCAPTCHA. Пытаемся решить...")
+        # if "reCAPTCHA" in driver.page_source:
+        #     is_recaptcha_solved = False
+        #     print_message("Обнаружена reCAPTCHA, решаем...")
 
-            # Поиск iframe с reCAPTCHA
-            iframe = driver.find_element(By.CSS_SELECTOR, "iframe[src*='recaptcha']")
-            iframe_src = iframe.get_attribute("src")
-            print(f"Iframe src: {iframe_src}")
+        #     sitekey = extract_sitekey(driver, url)
+        #     print(f"Sitekey: {sitekey}")
 
-            # Извлечение sitekey из параметра 'k' в URL iframe
-            match = re.search(r"[?&]k=([^&]+)", iframe_src)
-            if not match:
-                print("Sitekey не найден в iframe URL.")
-                driver.quit()
-                exit()
+        #     result = solver.recaptcha(sitekey, url)
+        #     print(f'reCAPTCHA result: {result["code"][0:50]}...')
 
-            sitekey = match.group(1)
-            print(f"Sitekey: {sitekey}")
+        #     is_recaptcha_solved = send_recaptcha_token(result["code"])
 
-            # Решение reCAPTCHA через 2Captcha
-            try:
-                result = solver.recaptcha(
-                    sitekey=sitekey, url=driver.current_url, version="v2"
+        if is_recaptcha_solved:
+            # Достаём данные об авто после решения капчи
+            car_date, car_price, car_engine_displacement, car_title = "", "", "", ""
+
+            price_el = driver.find_element(By.CLASS_NAME, "DetailLeadCase_point__vdG4b")
+            car_price = re.sub(r"\D", "", price_el.text)
+            time.sleep(3)
+
+            button = WebDriverWait(driver, 2).until(
+                EC.element_to_be_clickable(
+                    (By.XPATH, "//button[contains(text(), '자세히')]")
                 )
-                token = result["code"]
-                print("Токен reCAPTCHA успешно получен.")
-            except Exception as e:
-                print(f"Ошибка при решении reCAPTCHA: {e}")
-                driver.quit()
-                exit()
-
-            # Возврат в основной контекст страницы
-            driver.switch_to.default_content()
-
-            # Вставка токена в textarea элемента g-recaptcha-response
-            captcha_response = driver.find_element(
-                By.CSS_SELECTOR, ".g-recaptcha-response"
             )
-            driver.execute_script(
-                "arguments[0].style.display = 'block';", captcha_response
+            button.click()
+            time.sleep(2)
+
+            content = driver.find_element(
+                By.CLASS_NAME,
+                "BottomSheet-module_bottom_sheet__LeljN",
             )
+            splitted_content = content.text.split("\n")
+            car_engine_displacement = re.sub(r"\D", "", splitted_content[9])
 
-            print(captcha_response.get_property("value"))
+            car_date = splitted_content[5]
+            year = re.sub(r"\D", "", car_date.split(" ")[0])
 
-            driver.execute_script(f"arguments[0].value = '{token}';", captcha_response)
-            print("Токен вставлен в g-recaptcha-response.")
+            month = re.sub(r"\D", "", car_date.split(" ")[1])
+            car_month = month
 
-            # Отправка формы
-            try:
-                form = driver.find_element(By.CSS_SELECTOR, "form.cont_main_captcha")
-                form.submit()
-                print("Форма успешно отправлена.")
-            except Exception as e:
-                print(f"Ошибка при отправке формы: {e}")
-                driver.quit()
-                exit()
+            formatted_car_date = f"01{month}{year}"
 
-            # Ожидание завершения процесса и обновления страницы
-            time.sleep(5)
+            print(car_title)
+            print(f"Registration Date: {formatted_car_date}")
+            print(f"Car Engine Displacement: {car_engine_displacement}")
+            print(f"Price: {car_price}")
 
-            # Получение страницы с информацией о машине
-            car_info = driver.page_source
-            print("Информация о машине успешно получена!")
-            # print(car_info)
+            # Сохранение данных в базу
+            conn = psycopg2.connect(DATABASE_URL, sslmode="require")
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO car_info (car_id, date, engine_volume, price)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (car_id) DO NOTHING
+                """,
+                (car_id, formatted_car_date, car_engine_displacement, car_price),
+            )
+            conn.commit()
+            cursor.close()
+            conn.close()
+            print("Автомобиль был сохранён в базе данных")
 
-        # Парсим URL для получения carid
-        parsed_url = urlparse(url)
-        query_params = parse_qs(parsed_url.query)
-        car_id = query_params.get("carid", [None])[0]
-        car_id_external = car_id
+            new_url = f"https://plugin-back-versusm.amvera.io/car-ab-korea/{car_id}?price={car_price}&date={formatted_car_date}&volume={car_engine_displacement}"
 
-        # Проверка элемента areaLeaseRent
-        try:
-            print("Поиск areaLeaseRent")
-            lease_area = driver.find_element(By.ID, "areaLeaseRent")
-            title_element = lease_area.find_element(By.CLASS_NAME, "title")
+            driver.quit()
+            return [new_url, car_title]
 
-            if "리스정보" in title_element.text or "렌트정보" in title_element.text:
-                logging.info("Данная машина находится в лизинге.")
-                return [
-                    "",
-                    "Данная машина находится в лизинге. Свяжитесь с менеджером.",
-                ]
-        except NoSuchElementException:
-            logging.warning("Элемент areaLeaseRent не найден.")
-
-        # Инициализация переменных
-        car_title, car_date, car_engine_displacement, car_price = "", "", "", ""
-
-        meta_elements = driver.find_elements(By.CSS_SELECTOR, "meta[name^='WT.']")
-        meta_data = {}
-        for meta in meta_elements:
-            name = meta.get_attribute("name")
-            content = meta.get_attribute("content")
-            meta_data[name] = content
-
-        car_date = f'01{meta_data["WT.z_month"]}{meta_data["WT.z_year"][-2:]}'
-        car_price = meta_data["WT.z_price"]
-
-        # Ищем объём двигателя
-        try:
-            # Найти элемент с id "dsp"
-            dsp_element = driver.find_element(By.ID, "dsp")
-            # Получить значение из атрибута "value"
-            car_engine_displacement = dsp_element.get_attribute("value")
-        except Exception as e:
-            print(f"Ошибка при получении объема двигателя: {e}")
-
-        new_url = f"https://plugin-back-versusm.amvera.io/car-ab-korea/{car_id}?price={car_price}&date={car_date}&volume={car_engine_displacement}"
-        print(f"Данные о машине получены: {new_url}, {car_title}")
-
-        return [new_url, car_title]
-
-    except Exception as e:
-        logging.error(f"Произошла ошибка: {e}")
-        return None, None
-
-    finally:
+    except WebDriverException as e:
+        print(f"Ошибка Selenium: {e}")
         driver.quit()
+        return ["", "Произошла ошибка получения данных..."]
+
+    return ["", ""]
