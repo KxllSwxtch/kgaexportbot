@@ -7,17 +7,15 @@ import locale
 import datetime
 import logging
 import psycopg2
+import urllib.parse
 
 from telebot import types
 from dotenv import load_dotenv
 from seleniumwire import webdriver
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from urllib.parse import urlparse, parse_qs
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 CAPSOLVER_API_KEY = os.getenv("CAPSOLVER_API_KEY")  # Замените на ваш API-ключ CapSolver
 # CHROMEDRIVER_PATH = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
@@ -63,6 +61,10 @@ car_data = {}
 car_id_external = None
 usd_rate = None
 car_month = None
+car_year = None
+
+vehicle_no = None
+vehicle_id = None
 
 
 # def initialize_db():
@@ -373,7 +375,7 @@ def create_driver():
 
 
 def get_car_info(url):
-    global car_id_external
+    global car_id_external, vehicle_id, vehicle_no, car_month, car_year
 
     # driver = create_driver()
 
@@ -395,14 +397,23 @@ def get_car_info(url):
     # Получаем все необходимые данные по автомобилю
     car_price = str(response["advertisement"]["price"])
     car_date = response["category"]["yearMonth"]
+
     year = car_date[2:4]
     month = car_date[4:]
+
+    car_year = year
+    car_month = month
+
     car_engine_displacement = str(response["spec"]["displacement"])
     car_type = response["spec"]["bodyName"]
 
     # Форматируем
     formatted_car_date = f"01{month}{year}"
     formatted_car_type = "crossover" if car_type == "SUV" else "sedan"
+
+    # Для получения данных по страховым выплатам
+    vehicle_no = response["vehicleNo"]
+    vehicle_id = response["vehicleId"]
 
     print_message(
         f"ID: {car_id}\nType: {formatted_car_type}\nDate: {formatted_car_date}\nCar Engine Displacement: {car_engine_displacement}\nPrice: {car_price} KRW"
@@ -437,7 +448,7 @@ def get_car_info(url):
 
 # Function to calculate the total cost
 def calculate_cost(link, message):
-    global car_data, car_id_external, car_month
+    global car_data, car_id_external, car_month, car_year
 
     print_message("ЗАПРОС НА РАСЧËТ АВТОМОБИЛЯ")
 
@@ -464,41 +475,44 @@ def calculate_cost(link, message):
         car_id = query_params.get("carid", [None])[0]
 
     # Проверяем наличие автомобиля в базе данных
-    conn = psycopg2.connect(DATABASE_URL, sslmode="require")
-    cursor = conn.cursor()
+    # conn = psycopg2.connect(DATABASE_URL, sslmode="require")
+    # cursor = conn.cursor()
 
-    cursor.execute(
-        "SELECT date, engine_volume, price FROM car_info WHERE car_id = %s", (car_id,)
-    )
-    car_from_db = cursor.fetchone()
-    new_url = ""
-    car_title = ""
+    # cursor.execute(
+    #     "SELECT date, engine_volume, price FROM car_info WHERE car_id = %s", (car_id,)
+    # )
+    # car_from_db = cursor.fetchone()
+    # new_url = ""
+    # car_title = ""
 
-    if car_from_db:
-        # Автомобиль найден в БД, используем данные
-        date, engine_volume, price = car_from_db
-        car_month = date[
-            2:4
-        ]  # Сохраняем месяц авто для расчёта возраста если автомобиль был найден в БД
+    # if car_from_db:
+    #     # Автомобиль найден в БД, используем данные
+    #     date, engine_volume, price = car_from_db
+    #     car_month = date[
+    #         2:4
+    #     ]  # Сохраняем месяц авто для расчёта возраста если автомобиль был найден в БД
 
-        print(
-            f"Автомобиль найден в базе данных: {car_id}, {date}, {engine_volume}, {price}"
-        )
-        new_url = f"https://plugin-back-versusm.amvera.io/car-ab-korea/{car_id}?price={price}&date={date}&volume={engine_volume}"
-    else:
-        print("Автомобиль не был найден в базе данных.")
-        # Автомобиля нет в базе, вызываем get_car_info
-        result = get_car_info(link)
-        new_url, car_title = result
+    #     print(
+    #         f"Автомобиль найден в базе данных: {car_id}, {date}, {engine_volume}, {price}"
+    #     )
+    #     new_url = f"https://plugin-back-versusm.amvera.io/car-ab-korea/{car_id}?price={price}&date={date}&volume={engine_volume}"
+    # else:
+    #     print("Автомобиль не был найден в базе данных.")
+    #     # Автомобиля нет в базе, вызываем get_car_info
+    #     result = get_car_info(link)
+    #     new_url, car_title = result
 
-        if result is None:
-            print(f"Ошибка при вызове get_car_info для ссылки: {link}")
-            send_error_message(
-                message,
-                "🚫 Произошла ошибка при получении данных. Проверьте ссылку и попробуйте снова.",
-            )
-            bot.delete_message(message.chat.id, processing_message.message_id)
-            return
+    #     if result is None:
+    #         print(f"Ошибка при вызове get_car_info для ссылки: {link}")
+    #         send_error_message(
+    #             message,
+    #             "🚫 Произошла ошибка при получении данных. Проверьте ссылку и попробуйте снова.",
+    #         )
+    #         bot.delete_message(message.chat.id, processing_message.message_id)
+    #         return
+
+    result = get_car_info(link)
+    new_url, car_title = result
 
     # Проверка на наличие информации о лизинге
     if not new_url and car_title:
@@ -538,9 +552,9 @@ def calculate_cost(link, message):
 
             if year and engine_volume and price:
                 engine_volume_formatted = f"{format_number(int(engine_volume))} cc"
-                age_formatted = calculate_age(
-                    year, car_month
-                )  # Расчёт возраста автомобиля
+
+                formatted_car_year = f"20{car_year}"
+                age_formatted = calculate_age(int(formatted_car_year), car_month)
 
                 details = {
                     "car_price_korea": json_response.get("result")["price"]["car"][
@@ -640,48 +654,38 @@ def calculate_cost(link, message):
 
 # Function to get insurance total
 def get_insurance_total():
-    global car_id_external
+    global car_id_external, vehicle_no, vehicle_id
 
     print_message("[ЗАПРОС] ТЕХНИЧЕСКИЙ ОТЧËТ ОБ АВТОМОБИЛЕ")
 
-    driver = create_driver()
-    url = f"http://fem.encar.com/cars/report/accident/{car_id_external}"
+    formatted_vehicle_no = urllib.parse.quote(str(vehicle_no).strip())
+    url = f"https://api.encar.com/v1/readside/record/vehicle/{str(vehicle_id)}/open?vehicleNo={formatted_vehicle_no}"
 
     try:
-        driver.get(url)
-        time.sleep(5)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Referer": "http://www.encar.com/",
+            "Cache-Control": "max-age=0",
+            "Connection": "keep-alive",
+        }
 
-        try:
-            report_accident_el = driver.find_element(
-                By.CLASS_NAME, "ReportAccidentSummary_list_accident__q6vLx"
-            )
-
-            splitted_report = report_accident_el.text.split("\n")
-            damage_to_my_car = splitted_report[4]
-            damage_to_other_car = splitted_report[5]
-        except NoSuchElementException:
-            print("Элемент 'smlist' не найден.")
-            return ["Нет данных", "Нет данных"]
-
-        # Упрощенная функция для извлечения числа
-        def extract_large_number(damage_text):
-            if "없음" in damage_text:
-                return "0"
-            numbers = re.findall(r"[\d,]+(?=\s*원)", damage_text)
-            return numbers[0] if numbers else "0"
+        response = requests.get(url, headers)
+        json_response = response.json()
 
         # Форматируем данные
-        damage_to_my_car_formatted = extract_large_number(damage_to_my_car)
-        damage_to_other_car_formatted = extract_large_number(damage_to_other_car)
+        damage_to_my_car = json_response["myAccidentCost"]
+        damage_to_other_car = json_response["otherAccidentCost"]
 
-        return [damage_to_my_car_formatted, damage_to_other_car_formatted]
+        print(
+            f"Выплаты по представленному автомобилю: {format_number(damage_to_my_car)}"
+        )
+        print(f"Выплаты другому автомобилю: {format_number(damage_to_other_car)}")
+
+        return [format_number(damage_to_my_car), format_number(damage_to_other_car)]
 
     except Exception as e:
         print(f"Произошла ошибка при получении данных: {e}")
-        return ["Ошибка при получении данных", ""]
-
-    finally:
-        driver.quit()
+        return ["", ""]
 
 
 # Callback query handler
